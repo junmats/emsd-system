@@ -1,6 +1,184 @@
-# School Monitoring System
+# EMSD School Monitoring System
 
-A comprehensive web application for managing school operations including student records, payments, and charges.
+A comprehensive full-stack web application for school administration and student management.
+
+## 🏫 Overview
+
+The EMSD School Monitoring System is a professional web application designed to streamline school administration tasks including student management, payment processing, and charge management for grades 1-6.
+
+## ✨ Features
+
+### 🔐 Authentication & Security
+- JWT-based authentication system
+- Protected routes with authentication guards
+- Secure login/logout functionality
+- Role-based access control
+
+### 👨‍🎓 Student Management
+- Complete CRUD operations for students
+- Grade level management (Grades 1-6)
+- Individual and batch grade level upgrades
+- Student information tracking
+
+### 💰 Payment Processing
+- Handle student payments
+- Manual additional charges
+- Payment history tracking
+- Link students with payment records
+
+### 📊 Charge Management
+- Manage different types of charges (tuition, books, etc.)
+- Flexible charge categories
+- Charge assignment to students
+
+### 🎨 Professional UI/UX
+- Modern responsive design
+- Professional sidebar navigation
+- Gray, white, and maroon color scheme
+- Collapsible sidebar with user management
+- Bootstrap 5 integration with Font Awesome icons
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Framework**: Angular 18
+- **Language**: TypeScript
+- **Styling**: Bootstrap 5, SCSS
+- **Icons**: Font Awesome 6.4.0
+- **Architecture**: Standalone components
+
+### Backend
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Authentication**: JWT (JSON Web Tokens)
+- **API**: RESTful API design
+
+### Database
+- **Database**: MySQL 9.0
+- **Schema**: Relational database with proper constraints
+- **Tables**: Users, Students, Payments, Charges, and relationships
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v20.16.0 or higher)
+- MySQL (v9.0 or higher)
+- npm or yarn package manager
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/junmats/emsd-school-system.git
+   cd emsd-school-system
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   npm install
+   
+   # Create environment file
+   cp .env.example .env
+   # Edit .env with your database credentials
+   
+   # Start the backend server
+   npm run dev
+   ```
+
+3. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   
+   # Start the development server
+   npm start
+   ```
+
+4. **Database Setup**
+   - Create a MySQL database named `emsd_system`
+   - The application will automatically create tables and seed initial data
+   - Default admin credentials: `admin` / `admin123`
+
+### Development Servers
+- **Frontend**: http://localhost:4200
+- **Backend**: http://localhost:3000
+- **Database**: MySQL on port 3306
+
+## 📁 Project Structure
+
+```
+emsd-school-system/
+├── frontend/                 # Angular 18 application
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── components/   # Feature components
+│   │   │   ├── services/     # Angular services
+│   │   │   ├── guards/       # Route guards
+│   │   │   └── interceptors/ # HTTP interceptors
+│   │   └── themes/           # Theme configurations
+├── backend/                  # Node.js/Express API
+│   ├── src/
+│   │   ├── config/          # Database configuration
+│   │   ├── middleware/      # Express middleware
+│   │   └── routes/          # API route handlers
+└── README.md
+```
+
+## 🎨 Themes
+
+The application supports multiple themes:
+- **Current**: Gray, White, and Maroon professional theme
+- **Available**: Blue professional theme (saved in `/themes/`)
+
+## 🔧 Development
+
+### Available Scripts
+
+**Frontend**
+- `npm start` - Start development server
+- `npm run build` - Build for production
+- `npm test` - Run unit tests
+
+**Backend**
+- `npm run dev` - Start with nodemon (auto-reload)
+- `npm start` - Start production server
+- `npm run build` - Compile TypeScript
+
+### Git Workflow
+```bash
+# Check current status
+git status
+
+# Create feature branch
+git checkout -b feature/new-feature
+
+# Commit changes
+git add .
+git commit -m "Add new feature"
+
+# Push to GitHub
+git push origin feature/new-feature
+```
+
+## 📄 License
+
+This project is private and proprietary to EMSD.
+
+## 👥 Contributing
+
+This is a private repository. Please contact the administrator for access.
+
+## 📞 Support
+
+For support and questions, please contact the development team.
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: August 7, 2025  
+**Developed by**: EMSD Development Team
 
 ## Features
 
