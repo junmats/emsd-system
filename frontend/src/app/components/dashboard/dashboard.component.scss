@@ -1,0 +1,266 @@
+.dashboard-container {
+  max-width: 100%;
+  padding: 0;
+}
+
+.page-header {
+  border-bottom: 1px solid #e3e6f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  
+  h2 {
+    color: #2c5aa0;
+    font-weight: 600;
+  }
+  
+  p {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+  }
+}
+
+.border-left-primary {
+  border-left: 0.25rem solid #2c5aa0 !important;
+}
+
+.border-left-success {
+  border-left: 0.25rem solid #28a745 !important;
+}
+
+.border-left-info {
+  border-left: 0.25rem solid #17a2b8 !important;
+}
+
+.border-left-warning {
+  border-left: 0.25rem solid #ffc107 !important;
+}
+
+.text-xs {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.text-gray-800 {
+  color: #5a5c69 !important;
+}
+
+.text-gray-300 {
+  color: #dddfeb !important;
+}
+
+.text-primary {
+  color: #2c5aa0 !important;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-info {
+  color: #17a2b8 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.card {
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+  border: none;
+  border-radius: 0.5rem;
+  transition: transform 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.card-header {
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 1rem 1.25rem;
+  
+  h6 {
+    color: #2c5aa0;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.shadow {
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.badge-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-info {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.badge-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.no-gutters > .col,
+.no-gutters > [class*="col-"] {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.h5 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #5a5c69;
+}
+
+.table {
+  font-size: 0.875rem;
+  
+  th {
+    font-weight: 600;
+    color: #5a5c69;
+    background-color: #f8f9fc;
+    border-top: none;
+    padding: 0.75rem;
+  }
+  
+  td {
+    padding: 0.75rem;
+    vertical-align: middle;
+  }
+}
+
+.btn {
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+  
+  &.btn-block {
+    width: 100%;
+  }
+  
+  i {
+    font-size: 0.875rem;
+  }
+}
+
+.btn-primary {
+  background-color: #2c5aa0;
+  border-color: #2c5aa0;
+  
+  &:hover {
+    background-color: #1e3d70;
+    border-color: #1e3d70;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+  
+  &:hover {
+    background-color: #1e7e34;
+    border-color: #1e7e34;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  
+  &:hover {
+    background-color: #117a8b;
+    border-color: #117a8b;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+  
+  &:hover {
+    background-color: #e0a800;
+    border-color: #e0a800;
+    color: #212529;
+    transform: translateY(-1px);
+  }
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+.py-4 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+// Stats card animation
+.card-body .row {
+  align-items: center;
+}
+
+.fa-2x {
+  font-size: 2em;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .col-xl-3,
+  .col-md-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .h5 {
+    font-size: 1.1rem;
+  }
+  
+  .text-xs {
+    font-size: 0.65rem;
+  }
+}

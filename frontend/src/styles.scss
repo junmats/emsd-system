@@ -1,0 +1,55 @@
+/* You can add global styles to this file, and also import other style files */
+
+// Bootstrap CSS
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Font Awesome CSS
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+// Global styles
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+// Remove default margins and padding
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+  padding: 0;
+}
+
+// Smooth scrolling
+html {
+  scroll-behavior: smooth;
+}
+
+// Custom button styles
+.btn {
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+// Custom input styles
+.form-control {
+  border-radius: 0.375rem;
+  border: 1px solid #ced4da;
+  
+  &:focus {
+    border-color: #2c5aa0;
+    box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+  }
+}
+
+// Loading animations
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}

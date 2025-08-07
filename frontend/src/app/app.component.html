@@ -1,0 +1,103 @@
+<!-- Login Page -->
+<div *ngIf="!isLoggedIn" class="login-container">
+  <router-outlet></router-outlet>
+</div>
+
+<!-- Main Application with Sidebar -->
+<div *ngIf="isLoggedIn" class="app-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="!sidebarOpen">
+    <!-- Sidebar Header with Logo and Toggle -->
+    <div class="sidebar-header">
+      <div class="logo" *ngIf="sidebarOpen">
+        <i class="fas fa-graduation-cap"></i>
+        <span class="logo-text">EMSD System</span>
+      </div>
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+
+    <!-- User Info Section -->
+    <div class="user-info" *ngIf="sidebarOpen">
+      <div class="user-avatar">
+        <i class="fas fa-user-circle"></i>
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ getCurrentUser() }}</div>
+        <p class="user-role">Administrator</p>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a routerLink="/dashboard" 
+           routerLinkActive="active" 
+           class="nav-link"
+           [title]="!sidebarOpen ? 'Dashboard' : ''">
+          <i class="fas fa-tachometer-alt"></i>
+          <span class="nav-text" *ngIf="sidebarOpen">Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/students" 
+           routerLinkActive="active" 
+           class="nav-link"
+           [title]="!sidebarOpen ? 'Students' : ''">
+          <i class="fas fa-user-graduate"></i>
+          <span class="nav-text" *ngIf="sidebarOpen">Students</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/payments" 
+           routerLinkActive="active" 
+           class="nav-link"
+           [title]="!sidebarOpen ? 'Payments' : ''">
+          <i class="fas fa-credit-card"></i>
+          <span class="nav-text" *ngIf="sidebarOpen">Payments</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/charges" 
+           routerLinkActive="active" 
+           class="nav-link"
+           [title]="!sidebarOpen ? 'Charges' : ''">
+          <i class="fas fa-money-bill-wave"></i>
+          <span class="nav-text" *ngIf="sidebarOpen">Charges</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Sidebar Footer with Logout -->
+    <div class="sidebar-footer">
+      <button class="logout-btn" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span *ngIf="sidebarOpen">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content" [class.expanded]="!sidebarOpen">
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+      <div class="nav-left">
+        <h1 class="page-title">{{ getPageTitle() }}</h1>
+      </div>
+      <div class="nav-right">
+        <div class="user-menu">
+          <span class="welcome-text">Welcome back!</span>
+          <div class="user-avatar-small">
+            <i class="fas fa-user-circle"></i>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

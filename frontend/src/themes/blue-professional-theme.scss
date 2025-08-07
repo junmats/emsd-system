@@ -1,0 +1,65 @@
+// SAVED THEME: Blue Professional Theme
+// This is your original professional blue gradient theme
+// Use this to revert back to the blue theme if needed
+
+// Professional Blue Color Palette
+:host {
+  --primary-color: #2c5aa0;
+  --primary-dark: #1e3d70;
+  --secondary-color: #f8f9fa;
+  --accent-color: #17a2b8;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --dark-color: #343a40;
+  --light-color: #ffffff;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 70px;
+  --header-height: 70px;
+}
+
+// Blue Gradient Sidebar
+.sidebar {
+  background: #2c5aa0; // Solid fallback
+  background: linear-gradient(135deg, #2c5aa0 0%, #1e3d70 100%);
+  color: #ffffff;
+  
+  .sidebar-header {
+    background-color: rgba(0, 0, 0, 0.1);
+    
+    .logo i {
+      color: #ffd700; // Gold accent for logo
+    }
+  }
+  
+  .user-info {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .nav-menu .nav-item .nav-link {
+    &.active {
+      border-right: 3px solid #ffd700;
+      
+      &::before {
+        background-color: #ffd700;
+      }
+    }
+  }
+}
+
+// Blue Primary Buttons
+.btn-primary {
+  background-color: #2c5aa0;
+  border-color: #2c5aa0;
+  
+  &:hover {
+    background-color: #1e3d70;
+    border-color: #1e3d70;
+  }
+}
