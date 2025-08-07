@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface Student {
   id: number;
@@ -49,13 +50,53 @@ export class StudentService {
     if (params) {
       Object.keys(params).forEach(key => {
         const value = (params as any)[key];
-        if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null && value !== '') {
           httpParams = httpParams.set(key, value.toString());
         }
       });
     }
 
+    // If no status is provided, we need to get all students regardless of status
+    // The backend defaults to 'active' only, so we need to make multiple calls or modify the approach
+    if (!params?.status) {
+      // Make separate calls for each status and combine them
+      return this.getAllStudentsAllStatuses();
+    }
+
     return this.http.get<StudentListResponse>(this.apiUrl, { params: httpParams });
+  }
+
+  private getAllStudentsAllStatuses(): Observable<StudentListResponse> {
+    const activeStudents$ = this.http.get<StudentListResponse>(this.apiUrl, { 
+      params: new HttpParams().set('status', 'active').set('limit', '1000') 
+    });
+    const inactiveStudents$ = this.http.get<StudentListResponse>(this.apiUrl, { 
+      params: new HttpParams().set('status', 'inactive').set('limit', '1000') 
+    });
+    const graduatedStudents$ = this.http.get<StudentListResponse>(this.apiUrl, { 
+      params: new HttpParams().set('status', 'graduated').set('limit', '1000') 
+    });
+
+    return combineLatest([activeStudents$, inactiveStudents$, graduatedStudents$]).pipe(
+      map(([active, inactive, graduated]: [StudentListResponse, StudentListResponse, StudentListResponse]) => {
+        const allStudents = [
+          ...(active.success ? active.data : []),
+          ...(inactive.success ? inactive.data : []),
+          ...(graduated.success ? graduated.data : [])
+        ];
+        
+        return {
+          success: true,
+          data: allStudents,
+          pagination: {
+            page: 1,
+            limit: allStudents.length,
+            total: allStudents.length,
+            pages: 1
+          }
+        };
+      })
+    );
   }
 
   getStudent(id: number): Observable<StudentResponse> {

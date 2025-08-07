@@ -1,75 +1,94 @@
 <div class="students-container">
   <!-- Page Header -->
   <div class="page-header">
-    <h2 class="page-title">
-      <i class="fas fa-user-graduate me-2 text-primary"></i>
-      Student Management
-    </h2>
-    <p class="page-description">Manage and view all students in the school system</p>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <p class="page-description">Manage and view all students</p>
+      </div>
+      <div>
+        <button class="btn btn-primary" (click)="openAddModal()">
+          <i class="fas fa-plus me-2"></i>
+          Add New Student
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Tab Navigation -->
+  <!-- Student Management Section -->
   <div class="card">
     <div class="card-header">
-      <ul class="nav nav-tabs card-header-tabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button 
-            class="nav-link" 
-            [class.active]="activeTab === 'all'"
-            (click)="setActiveTab('all')"
-            type="button">
-            <i class="fas fa-list me-1"></i>
-            All Students
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button 
-            class="nav-link" 
-            [class.active]="activeTab === 'grade'"
-            (click)="setActiveTab('grade')"
-            type="button">
-            <i class="fas fa-layer-group me-1"></i>
-            By Grade Level
-          </button>
-        </li>
-      </ul>
+      <h5 class="mb-0">
+        <i class="fas fa-list me-2"></i>
+        All Students
+        <span class="badge bg-primary ms-2">{{ filteredStudents.length }}</span>
+      </h5>
     </div>
 
     <div class="card-body">
-      <!-- Grade Level Filter (only shown when Grade tab is active) -->
-      <div *ngIf="activeTab === 'grade'" class="grade-filter mb-4">
-        <div class="row align-items-center">
-          <div class="col-md-4">
-            <label for="gradeSelect" class="form-label fw-semibold">
-              <i class="fas fa-filter me-1"></i>
-              Select Grade Level:
-            </label>
-            <select 
-              id="gradeSelect"
-              class="form-select"
-              [(ngModel)]="selectedGradeLevel"
-              (change)="onGradeLevelChange()">
-              <option [value]="null">Choose a grade level...</option>
-              <option *ngFor="let grade of gradeLevels" [value]="grade">
-                Grade {{ grade }}
-              </option>
-            </select>
+      <!-- Filters and Search -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <label for="searchInput" class="form-label">Search Students</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" id="searchInput" placeholder="Search by name or student ID..." 
+                   [(ngModel)]="searchTerm" (input)="onSearchChange()">
           </div>
-          <div class="col-md-8" *ngIf="selectedGradeLevel">
-            <div class="grade-info">
-              <span class="badge bg-primary fs-6">
-                {{ filteredStudents.length }} student(s) in Grade {{ selectedGradeLevel }}
-              </span>
-            </div>
+        </div>
+        <div class="col-md-2">
+          <label for="gradeFilter" class="form-label">Grade Level</label>
+          <select class="form-select" id="gradeFilter" [(ngModel)]="selectedGradeFilter" (change)="applyFilters()">
+            <option value="">All Grades</option>
+            <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="statusFilter" class="form-label">Status</label>
+          <select class="form-select" id="statusFilter" [(ngModel)]="selectedStatusFilter" (change)="applyFilters()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="graduated">Graduated</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">&nbsp;</label>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" (click)="clearFilters()">
+              <i class="fas fa-times me-1"></i>Clear Filters
+            </button>
+            <button class="btn btn-primary" (click)="openAddModal()">
+              <i class="fas fa-plus me-1"></i>Add Student
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Student Count for All Students -->
-      <div *ngIf="activeTab === 'all'" class="student-count mb-3">
-        <span class="badge bg-info fs-6">
-          {{ filteredStudents.length }} total student(s)
-        </span>
+      <!-- Bulk Actions Bar -->
+      <div *ngIf="showBulkActions" class="alert alert-info d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <i class="fas fa-check-circle me-2"></i>
+          <strong>{{ selectedStudents.size }}</strong> student(s) selected
+        </div>
+        <div class="btn-group" role="group">
+          <button class="btn btn-sm btn-outline-secondary" (click)="clearSelection()">
+            <i class="fas fa-times me-1"></i>Clear Selection
+          </button>
+          <button class="btn btn-sm btn-outline-success" 
+                  (click)="bulkUpgrade()" 
+                  [disabled]="bulkUpgrading">
+            <span *ngIf="bulkUpgrading" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!bulkUpgrading" class="fas fa-arrow-up me-1"></i>
+            {{ bulkUpgrading ? 'Upgrading...' : 'Upgrade Selected' }}
+          </button>
+          <button class="btn btn-sm btn-outline-danger" 
+                  (click)="bulkDelete()" 
+                  [disabled]="bulkDeleting">
+            <span *ngIf="bulkDeleting" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!bulkDeleting" class="fas fa-trash me-1"></i>
+            {{ bulkDeleting ? 'Deleting...' : 'Delete Selected' }}
+          </button>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -94,9 +113,8 @@
         <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
         <h5 class="text-muted">No Students Found</h5>
         <p class="text-muted">
-          <span *ngIf="activeTab === 'all'">No students are currently enrolled in the system.</span>
-          <span *ngIf="activeTab === 'grade' && !selectedGradeLevel">Please select a grade level to view students.</span>
-          <span *ngIf="activeTab === 'grade' && selectedGradeLevel">No students found in Grade {{ selectedGradeLevel }}.</span>
+          <span *ngIf="!searchTerm && !selectedGradeFilter && !selectedStatusFilter">No students are currently enrolled in the system.</span>
+          <span *ngIf="searchTerm || selectedGradeFilter || selectedStatusFilter">No students match the current filters. Try adjusting your search criteria.</span>
         </p>
       </div>
 
@@ -108,6 +126,17 @@
               <table class="table table-hover">
                 <thead class="table-light">
                   <tr>
+                    <th scope="col" style="width: 50px;">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" 
+                               [checked]="selectAll" 
+                               (change)="toggleSelectAll()"
+                               id="selectAllCheckbox">
+                        <label class="form-check-label" for="selectAllCheckbox">
+                          <span class="visually-hidden">Select All</span>
+                        </label>
+                      </div>
+                    </th>
                     <th scope="col">
                       <i class="fas fa-user me-1"></i>
                       Name
@@ -137,6 +166,17 @@
                 <tbody>
                   <tr *ngFor="let student of filteredStudents; trackBy: trackByStudentId">
                     <td>
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" 
+                               [checked]="isStudentSelected(student.id)" 
+                               (change)="toggleStudentSelection(student.id)"
+                               [id]="'student-checkbox-' + student.id">
+                        <label class="form-check-label" [for]="'student-checkbox-' + student.id">
+                          <span class="visually-hidden">Select {{ getStudentFullName(student) }}</span>
+                        </label>
+                      </div>
+                    </td>
+                    <td>
                       <div class="student-name">
                         <strong>{{ getStudentFullName(student) }}</strong>
                         <small class="text-muted d-block" *ngIf="student.parent_name">
@@ -164,15 +204,24 @@
                     <td>
                       <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-outline-primary" 
-                                title="View Details">
+                                title="View Details"
+                                (click)="openViewModal(student)">
                           <i class="fas fa-eye"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary" 
-                                title="Edit Student">
+                                title="Edit Student"
+                                (click)="openEditModal(student)">
                           <i class="fas fa-edit"></i>
                         </button>
+                        <button class="btn btn-sm btn-outline-success" 
+                                title="{{ student.grade_level === 6 ? 'Graduate Student' : 'Upgrade to Grade ' + (student.grade_level + 1) }}"
+                                (click)="openUpgradeModal(student)"
+                                *ngIf="student.status === 'active'">
+                          <i class="fas fa-arrow-up"></i>
+                        </button>
                         <button class="btn btn-sm btn-outline-danger" 
-                                title="Delete Student">
+                                title="Delete Student"
+                                (click)="openDeleteModal(student)">
                           <i class="fas fa-trash"></i>
                         </button>
                       </div>
@@ -183,6 +232,361 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upgrade/Graduate Confirmation Modal -->
+<div class="modal fade" [class.show]="showUpgradeModal" [style.display]="showUpgradeModal ? 'block' : 'none'" *ngIf="showUpgradeModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-arrow-up me-2 text-success"></i>
+          {{ selectedStudent?.grade_level === 6 ? 'Graduate Student' : 'Upgrade Grade Level' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModals()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedStudent">
+        <div class="text-center mb-3">
+          <i class="fas fa-user-graduate fa-3x text-success"></i>
+        </div>
+        <p class="text-center">
+          <span *ngIf="selectedStudent.grade_level < 6">
+            Upgrade <strong>{{ getStudentFullName(selectedStudent) }}</strong> from 
+            <span class="badge bg-primary">Grade {{ selectedStudent.grade_level }}</span> to 
+            <span class="badge bg-success">Grade {{ selectedStudent.grade_level + 1 }}</span>?
+          </span>
+          <span *ngIf="selectedStudent.grade_level === 6">
+            Graduate <strong>{{ getStudentFullName(selectedStudent) }}</strong> from 
+            <span class="badge bg-primary">Grade {{ selectedStudent.grade_level }}</span>?
+            <br><small class="text-muted">This will change their status to "Graduated"</small>
+          </span>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
+        <button type="button" class="btn btn-success" (click)="confirmUpgrade()" [disabled]="submitting">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!submitting" class="fas fa-check me-2"></i>
+          {{ submitting ? 'Processing...' : (selectedStudent?.grade_level === 6 ? 'Graduate' : 'Upgrade') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" [class.show]="showAddModal" [style.display]="showAddModal ? 'block' : 'none'" *ngIf="showAddModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-plus me-2 text-primary"></i>
+          Add New Student
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModals()"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="studentNumber" class="form-label">Student Number *</label>
+              <input type="text" class="form-control" id="studentNumber" [(ngModel)]="formStudent.student_number" name="studentNumber" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="firstName" class="form-label">First Name *</label>
+              <input type="text" class="form-control" id="firstName" [(ngModel)]="formStudent.first_name" name="firstName" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="lastName" class="form-label">Last Name *</label>
+              <input type="text" class="form-control" id="lastName" [(ngModel)]="formStudent.last_name" name="lastName" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="gradeLevel" class="form-label">Grade Level *</label>
+              <select class="form-select" id="gradeLevel" [(ngModel)]="formStudent.grade_level" name="gradeLevel" required>
+                <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="enrollmentDate" class="form-label">Enrollment Date *</label>
+              <input type="date" class="form-control" id="enrollmentDate" [(ngModel)]="formStudent.enrollment_date" name="enrollmentDate" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="dateOfBirth" class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" id="dateOfBirth" [(ngModel)]="formStudent.date_of_birth" name="dateOfBirth">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="status" class="form-label">Status</label>
+              <select class="form-select" id="status" [(ngModel)]="formStudent.status" name="status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="graduated">Graduated</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label for="address" class="form-label">Address</label>
+              <input type="text" class="form-control" id="address" [(ngModel)]="formStudent.address" name="address">
+            </div>
+          </div>
+          <hr class="my-4">
+          <h6 class="text-muted mb-3">Parent/Guardian Information</h6>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="parentName" class="form-label">Parent/Guardian Name</label>
+              <input type="text" class="form-control" id="parentName" [(ngModel)]="formStudent.parent_name" name="parentName">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="parentContact" class="form-label">Parent Contact</label>
+              <input type="text" class="form-control" id="parentContact" [(ngModel)]="formStudent.parent_contact" name="parentContact">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="parentEmail" class="form-label">Parent Email</label>
+              <input type="email" class="form-control" id="parentEmail" [(ngModel)]="formStudent.parent_email" name="parentEmail">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="submitAddStudent()" [disabled]="submitting">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!submitting" class="fas fa-save me-2"></i>
+          {{ submitting ? 'Adding...' : 'Add Student' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'" *ngIf="showEditModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-edit me-2 text-primary"></i>
+          Edit Student: {{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModals()"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="editStudentNumber" class="form-label">Student Number *</label>
+              <input type="text" class="form-control" id="editStudentNumber" [(ngModel)]="formStudent.student_number" name="editStudentNumber" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="editFirstName" class="form-label">First Name *</label>
+              <input type="text" class="form-control" id="editFirstName" [(ngModel)]="formStudent.first_name" name="editFirstName" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="editLastName" class="form-label">Last Name *</label>
+              <input type="text" class="form-control" id="editLastName" [(ngModel)]="formStudent.last_name" name="editLastName" required>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editGradeLevel" class="form-label">Grade Level *</label>
+              <select class="form-select" id="editGradeLevel" [(ngModel)]="formStudent.grade_level" name="editGradeLevel" required>
+                <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editEnrollmentDate" class="form-label">Enrollment Date</label>
+              <input type="date" class="form-control" id="editEnrollmentDate" [(ngModel)]="formStudent.enrollment_date" name="editEnrollmentDate" readonly>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editDateOfBirth" class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" id="editDateOfBirth" [(ngModel)]="formStudent.date_of_birth" name="editDateOfBirth">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editStatus" class="form-label">Status</label>
+              <select class="form-select" id="editStatus" [(ngModel)]="formStudent.status" name="editStatus">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="graduated">Graduated</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label for="editAddress" class="form-label">Address</label>
+              <input type="text" class="form-control" id="editAddress" [(ngModel)]="formStudent.address" name="editAddress">
+            </div>
+          </div>
+          <hr class="my-4">
+          <h6 class="text-muted mb-3">Parent/Guardian Information</h6>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editParentName" class="form-label">Parent/Guardian Name</label>
+              <input type="text" class="form-control" id="editParentName" [(ngModel)]="formStudent.parent_name" name="editParentName">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editParentContact" class="form-label">Parent Contact</label>
+              <input type="text" class="form-control" id="editParentContact" [(ngModel)]="formStudent.parent_contact" name="editParentContact">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editParentEmail" class="form-label">Parent Email</label>
+              <input type="email" class="form-control" id="editParentEmail" [(ngModel)]="formStudent.parent_email" name="editParentEmail">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="submitEditStudent()" [disabled]="submitting">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!submitting" class="fas fa-save me-2"></i>
+          {{ submitting ? 'Updating...' : 'Update Student' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Student Modal -->
+<div class="modal fade" [class.show]="showViewModal" [style.display]="showViewModal ? 'block' : 'none'" *ngIf="showViewModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-eye me-2 text-primary"></i>
+          Student Details: {{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModals()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedStudent">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-3">Basic Information</h6>
+            <p><strong>Student ID:</strong> {{ selectedStudent.student_number }}</p>
+            <p><strong>Full Name:</strong> {{ getStudentFullName(selectedStudent) }}</p>
+            <p><strong>Grade Level:</strong> {{ getGradeLevelText(selectedStudent.grade_level) }}</p>
+            <p><strong>Date of Birth:</strong> {{ selectedStudent.date_of_birth ? formatDate(selectedStudent.date_of_birth) : 'Not provided' }}</p>
+            <p><strong>Status:</strong> 
+              <span class="badge ms-1" 
+                    [class.bg-success]="selectedStudent.status === 'active'"
+                    [class.bg-warning]="selectedStudent.status === 'inactive'"
+                    [class.bg-info]="selectedStudent.status === 'graduated'">
+                {{ selectedStudent.status | titlecase }}
+              </span>
+            </p>
+            <p><strong>Address:</strong> {{ selectedStudent.address || 'Not provided' }}</p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted mb-3">Parent/Guardian Information</h6>
+            <p><strong>Parent Name:</strong> {{ selectedStudent.parent_name || 'Not provided' }}</p>
+            <p><strong>Parent Contact:</strong> {{ selectedStudent.parent_contact || 'Not provided' }}</p>
+            <p><strong>Parent Email:</strong> {{ selectedStudent.parent_email || 'Not provided' }}</p>
+            <hr>
+            <h6 class="text-muted mb-3">System Information</h6>
+            <p><strong>Enrollment Date:</strong> {{ formatDate(selectedStudent.enrollment_date) }}</p>
+            <p><strong>Created:</strong> {{ formatDate(selectedStudent.created_at) }}</p>
+            <p><strong>Last Updated:</strong> {{ formatDate(selectedStudent.updated_at) }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModals()">Close</button>
+        <button type="button" class="btn btn-primary" (click)="openEditModal(selectedStudent!)">
+          <i class="fas fa-edit me-2"></i>
+          Edit Student
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" [class.show]="showDeleteModal" [style.display]="showDeleteModal ? 'block' : 'none'" *ngIf="showDeleteModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+          Confirm Delete
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModals()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedStudent">
+        <p>Are you sure you want to delete the following student?</p>
+        <div class="alert alert-warning">
+          <strong>{{ getStudentFullName(selectedStudent) }}</strong><br>
+          <small>Student ID: {{ selectedStudent.student_number }} | Grade: {{ selectedStudent.grade_level }}</small>
+        </div>
+        <p class="text-danger"><strong>Warning:</strong> This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
+        <button type="button" class="btn btn-danger" (click)="confirmDeleteStudent()" [disabled]="submitting">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!submitting" class="fas fa-trash me-2"></i>
+          {{ submitting ? 'Deleting...' : 'Delete Student' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade show" *ngIf="showAddModal || showEditModal || showViewModal || showDeleteModal || showUpgradeModal || showConfirmationModal" (click)="closeModals()"></div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
+  <div *ngFor="let toast of toasts" 
+       class="toast show align-items-center border-0" 
+       [class.text-bg-success]="toast.type === 'success'"
+       [class.text-bg-danger]="toast.type === 'error'"
+       [class.text-bg-warning]="toast.type === 'warning'"
+       [class.text-bg-info]="toast.type === 'info'"
+       role="alert">
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas fa-check-circle me-2" *ngIf="toast.type === 'success'"></i>
+        <i class="fas fa-exclamation-circle me-2" *ngIf="toast.type === 'error'"></i>
+        <i class="fas fa-exclamation-triangle me-2" *ngIf="toast.type === 'warning'"></i>
+        <i class="fas fa-info-circle me-2" *ngIf="toast.type === 'info'"></i>
+        {{ toast.message }}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="removeToast(toast.id)"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" [class.show]="showConfirmationModal" [style.display]="showConfirmationModal ? 'block' : 'none'" *ngIf="showConfirmationModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-question-circle me-2"></i>
+          {{ confirmationTitle }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeConfirmationModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0" style="white-space: pre-line;">{{ confirmationMessage }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeConfirmationModal()">Cancel</button>
+        <button type="button" class="btn" [class]="confirmationButtonClass" (click)="executeConfirmationAction()">
+          {{ confirmationButtonText }}
+        </button>
       </div>
     </div>
   </div>

@@ -261,4 +261,112 @@ router.get('/grade/:grade_level', async (req: AuthRequest, res: Response, next: 
   }
 });
 
+// Get student charges summary
+router.get('/students/summary', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { grade_level, status = 'active' } = req.query;
+    const connection = getConnection();
+    
+    let query = `
+      SELECT 
+        s.id as student_id,
+        s.student_number,
+        s.first_name,
+        s.last_name,
+        s.grade_level,
+        s.status,
+        COALESCE(SUM(CASE WHEN c.is_mandatory = true THEN c.amount ELSE 0 END), 0) as mandatory_charges,
+        COALESCE(SUM(c.amount), 0) as total_charges,
+        COALESCE(SUM(p.total_amount), 0) as total_payments,
+        (COALESCE(SUM(c.amount), 0) - COALESCE(SUM(p.total_amount), 0)) as remaining_balance
+      FROM students s
+      LEFT JOIN charges c ON c.grade_level = s.grade_level AND c.is_active = true
+      LEFT JOIN payments p ON p.student_id = s.id
+      WHERE s.status = ?
+    `;
+    
+    const params: any[] = [status];
+    
+    if (grade_level) {
+      query += ' AND s.grade_level = ?';
+      params.push(grade_level);
+    }
+    
+    query += `
+      GROUP BY s.id, s.student_number, s.first_name, s.last_name, s.grade_level, s.status
+      ORDER BY s.grade_level, s.last_name, s.first_name
+    `;
+    
+    const [studentCharges] = await connection.execute(query, params);
+
+    res.json({
+      success: true,
+      data: studentCharges
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get detailed charge breakdown for a specific student
+router.get('/students/:studentId/breakdown', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { studentId } = req.params;
+    const connection = getConnection();
+    
+    // Get student info
+    const [studentData] = await connection.execute(
+      'SELECT * FROM students WHERE id = ?',
+      [studentId]
+    );
+    
+    if (!Array.isArray(studentData) || studentData.length === 0) {
+      return next(createError('Student not found', 404));
+    }
+    
+    const student = (studentData as any[])[0];
+    
+    // Get all charges for student's grade level
+    const [charges] = await connection.execute(
+      `SELECT id, name, description, amount, charge_type, is_mandatory, is_active 
+       FROM charges 
+       WHERE grade_level = ? AND is_active = true 
+       ORDER BY charge_type, name`,
+      [student.grade_level]
+    );
+    
+    // Get all payments made by this student
+    const [payments] = await connection.execute(
+      `SELECT id, total_amount, payment_date, notes, created_at
+       FROM payments 
+       WHERE student_id = ? 
+       ORDER BY payment_date DESC, created_at DESC`,
+      [studentId]
+    );
+    
+    // Calculate totals
+    const totalCharges = (charges as any[]).reduce((sum, charge) => sum + charge.amount, 0);
+    const mandatoryCharges = (charges as any[]).filter(c => c.is_mandatory).reduce((sum, charge) => sum + charge.amount, 0);
+    const totalPayments = (payments as any[]).reduce((sum, payment) => sum + payment.total_amount, 0);
+    const remainingBalance = totalCharges - totalPayments;
+    
+    res.json({
+      success: true,
+      data: {
+        student,
+        charges,
+        payments,
+        summary: {
+          total_charges: totalCharges,
+          mandatory_charges: mandatoryCharges,
+          total_payments: totalPayments,
+          remaining_balance: remainingBalance
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
