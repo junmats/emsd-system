@@ -1,1 +1,189 @@
-<p>students works!</p>
+<div class="students-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2 class="page-title">
+      <i class="fas fa-user-graduate me-2 text-primary"></i>
+      Student Management
+    </h2>
+    <p class="page-description">Manage and view all students in the school system</p>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="card">
+    <div class="card-header">
+      <ul class="nav nav-tabs card-header-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button 
+            class="nav-link" 
+            [class.active]="activeTab === 'all'"
+            (click)="setActiveTab('all')"
+            type="button">
+            <i class="fas fa-list me-1"></i>
+            All Students
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button 
+            class="nav-link" 
+            [class.active]="activeTab === 'grade'"
+            (click)="setActiveTab('grade')"
+            type="button">
+            <i class="fas fa-layer-group me-1"></i>
+            By Grade Level
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card-body">
+      <!-- Grade Level Filter (only shown when Grade tab is active) -->
+      <div *ngIf="activeTab === 'grade'" class="grade-filter mb-4">
+        <div class="row align-items-center">
+          <div class="col-md-4">
+            <label for="gradeSelect" class="form-label fw-semibold">
+              <i class="fas fa-filter me-1"></i>
+              Select Grade Level:
+            </label>
+            <select 
+              id="gradeSelect"
+              class="form-select"
+              [(ngModel)]="selectedGradeLevel"
+              (change)="onGradeLevelChange()">
+              <option [value]="null">Choose a grade level...</option>
+              <option *ngFor="let grade of gradeLevels" [value]="grade">
+                Grade {{ grade }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-8" *ngIf="selectedGradeLevel">
+            <div class="grade-info">
+              <span class="badge bg-primary fs-6">
+                {{ filteredStudents.length }} student(s) in Grade {{ selectedGradeLevel }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student Count for All Students -->
+      <div *ngIf="activeTab === 'all'" class="student-count mb-3">
+        <span class="badge bg-info fs-6">
+          {{ filteredStudents.length }} total student(s)
+        </span>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading students...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadStudents()">
+          <i class="fas fa-redo me-1"></i>Retry
+        </button>
+      </div>
+
+      <!-- No Students Message -->
+      <div *ngIf="!loading && !error && filteredStudents.length === 0" class="text-center py-5">
+        <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No Students Found</h5>
+        <p class="text-muted">
+          <span *ngIf="activeTab === 'all'">No students are currently enrolled in the system.</span>
+          <span *ngIf="activeTab === 'grade' && !selectedGradeLevel">Please select a grade level to view students.</span>
+          <span *ngIf="activeTab === 'grade' && selectedGradeLevel">No students found in Grade {{ selectedGradeLevel }}.</span>
+        </p>
+      </div>
+
+      <!-- Students List -->
+      <div *ngIf="!loading && !error && filteredStudents.length > 0" class="students-list">
+        <div class="row">
+          <div class="col-12">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">
+                      <i class="fas fa-user me-1"></i>
+                      Name
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-id-card me-1"></i>
+                      Student ID
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-layer-group me-1"></i>
+                      Grade Level
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-calendar me-1"></i>
+                      Enrollment Date
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-info-circle me-1"></i>
+                      Status
+                    </th>
+                    <th scope="col">
+                      <i class="fas fa-cogs me-1"></i>
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let student of filteredStudents; trackBy: trackByStudentId">
+                    <td>
+                      <div class="student-name">
+                        <strong>{{ getStudentFullName(student) }}</strong>
+                        <small class="text-muted d-block" *ngIf="student.parent_name">
+                          Parent: {{ student.parent_name }}
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{ student.student_number }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-primary">Grade {{ student.grade_level }}</span>
+                    </td>
+                    <td class="text-muted">
+                      {{ formatDate(student.enrollment_date) }}
+                    </td>
+                    <td>
+                      <span class="badge" 
+                            [class.bg-success]="student.status === 'active'"
+                            [class.bg-warning]="student.status === 'inactive'"
+                            [class.bg-info]="student.status === 'graduated'">
+                        {{ student.status | titlecase }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" 
+                                title="View Details">
+                          <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" 
+                                title="Edit Student">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" 
+                                title="Delete Student">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
