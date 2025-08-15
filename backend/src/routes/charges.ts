@@ -275,13 +275,35 @@ router.get('/students/summary', async (req: AuthRequest, res: Response, next: Ne
         s.last_name,
         s.grade_level,
         s.status,
-        COALESCE(SUM(CASE WHEN c.is_mandatory = true THEN c.amount ELSE 0 END), 0) as mandatory_charges,
-        COALESCE(SUM(c.amount), 0) as total_charges,
-        COALESCE(SUM(p.total_amount), 0) as total_payments,
-        (COALESCE(SUM(c.amount), 0) - COALESCE(SUM(p.total_amount), 0)) as remaining_balance
+        COALESCE(charges_summary.mandatory_charges, 0) as mandatory_charges,
+        COALESCE(charges_summary.total_charges, 0) as total_charges,
+        COALESCE(payments_summary.total_payments, 0) as total_payments,
+        COALESCE(back_payments_summary.total_back_payments, 0) as total_back_payments,
+        (COALESCE(charges_summary.total_charges, 0) + COALESCE(back_payments_summary.total_back_payments, 0) - COALESCE(payments_summary.total_payments, 0)) as remaining_balance
       FROM students s
-      LEFT JOIN charges c ON c.grade_level = s.grade_level AND c.is_active = true
-      LEFT JOIN payments p ON p.student_id = s.id
+      LEFT JOIN (
+        SELECT 
+          grade_level,
+          SUM(CASE WHEN is_mandatory = true THEN amount ELSE 0 END) as mandatory_charges,
+          SUM(amount) as total_charges
+        FROM charges 
+        WHERE is_active = true 
+        GROUP BY grade_level
+      ) charges_summary ON charges_summary.grade_level = s.grade_level
+      LEFT JOIN (
+        SELECT 
+          student_id,
+          SUM(total_amount) as total_payments
+        FROM payments 
+        GROUP BY student_id
+      ) payments_summary ON payments_summary.student_id = s.id
+      LEFT JOIN (
+        SELECT 
+          student_id,
+          SUM(amount_due - amount_paid) as total_back_payments
+        FROM back_payments 
+        GROUP BY student_id
+      ) back_payments_summary ON back_payments_summary.student_id = s.id
       WHERE s.status = ?
     `;
     
@@ -293,7 +315,6 @@ router.get('/students/summary', async (req: AuthRequest, res: Response, next: Ne
     }
     
     query += `
-      GROUP BY s.id, s.student_number, s.first_name, s.last_name, s.grade_level, s.status
       ORDER BY s.grade_level, s.last_name, s.first_name
     `;
     
@@ -344,23 +365,40 @@ router.get('/students/:studentId/breakdown', async (req: AuthRequest, res: Respo
       [studentId]
     );
     
+    // Get back payments for this student
+    const [backPayments] = await connection.execute(
+      `SELECT bp.*, c.name as charge_name, c.description as charge_description
+       FROM back_payments bp
+       JOIN charges c ON bp.charge_id = c.id
+       WHERE bp.student_id = ?
+       ORDER BY bp.created_at DESC`,
+      [studentId]
+    );
+    
     // Calculate totals
-    const totalCharges = (charges as any[]).reduce((sum, charge) => sum + charge.amount, 0);
-    const mandatoryCharges = (charges as any[]).filter(c => c.is_mandatory).reduce((sum, charge) => sum + charge.amount, 0);
-    const totalPayments = (payments as any[]).reduce((sum, payment) => sum + payment.total_amount, 0);
-    const remainingBalance = totalCharges - totalPayments;
+    const totalCharges = (charges as any[]).reduce((sum, charge) => sum + (parseFloat(charge.amount) || 0), 0);
+    const mandatoryCharges = (charges as any[]).filter(c => c.is_mandatory).reduce((sum, charge) => sum + (parseFloat(charge.amount) || 0), 0);
+    const totalPayments = (payments as any[]).reduce((sum, payment) => sum + (parseFloat(payment.total_amount) || 0), 0);
+    const totalBackPayments = (backPayments as any[]).reduce((sum, bp) => {
+      const amountDue = parseFloat(bp.amount_due) || 0;
+      const amountPaid = parseFloat(bp.amount_paid) || 0;
+      return sum + (amountDue - amountPaid);
+    }, 0);
+    const remainingBalance = totalCharges + totalBackPayments - totalPayments;
     
     res.json({
       success: true,
       data: {
         student,
-        charges,
-        payments,
+        charges: charges || [],
+        payments: payments || [],
+        backPayments: backPayments || [],
         summary: {
-          total_charges: totalCharges,
-          mandatory_charges: mandatoryCharges,
-          total_payments: totalPayments,
-          remaining_balance: remainingBalance
+          total_charges: totalCharges || 0,
+          mandatory_charges: mandatoryCharges || 0,
+          total_payments: totalPayments || 0,
+          total_back_payments: totalBackPayments || 0,
+          remaining_balance: remainingBalance || 0
         }
       }
     });

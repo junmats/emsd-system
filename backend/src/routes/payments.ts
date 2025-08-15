@@ -187,7 +187,7 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
         `INSERT INTO payments 
          (student_id, payment_date, total_amount, payment_method, reference_number, notes, created_by)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [student_id, payment_date, total_amount, payment_method, reference_number, notes, req.user!.id]
+        [student_id, payment_date, total_amount, payment_method, reference_number || null, notes || null, req.user!.id]
       );
 
       const paymentId = (paymentResult as any).insertId;
@@ -225,6 +225,34 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
              WHERE student_id = ? AND charge_id = ?`,
             [student_id, item.charge_id]
           );
+        }
+
+        // Handle back payment updates if this is a back payment item
+        if (item.is_manual_charge && item.description && item.description.includes('Back Payment:')) {
+          // Try to identify which back payment this relates to based on description
+          const backPaymentMatch = item.description.match(/Back Payment: (.+) \(Grade (\d+) → (\d+)\)/);
+          if (backPaymentMatch) {
+            const chargeName = backPaymentMatch[1];
+            const originalGrade = parseInt(backPaymentMatch[2]);
+            const currentGrade = parseInt(backPaymentMatch[3]);
+            
+            // Find and update the corresponding back payment record
+            await connection.execute(
+              `UPDATE back_payments 
+               SET amount_paid = amount_paid + ?,
+                   status = CASE 
+                     WHEN amount_paid + ? >= amount_due THEN 'paid'
+                     WHEN amount_paid + ? > 0 THEN 'partial'
+                     ELSE 'pending'
+                   END,
+                   updated_at = NOW()
+               WHERE student_id = ? 
+                 AND original_grade_level = ? 
+                 AND current_grade_level = ? 
+                 AND charge_name = ?`,
+              [item.amount, item.amount, item.amount, student_id, originalGrade, currentGrade, chargeName]
+            );
+          }
         }
       }
 

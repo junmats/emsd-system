@@ -143,6 +143,25 @@ const createTables = async (): Promise<void> => {
       )
     `);
 
+    // Back payments table (for tracking unpaid charges from previous grades)
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS back_payments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT NOT NULL,
+        original_grade_level INT NOT NULL,
+        current_grade_level INT NOT NULL,
+        charge_id INT NOT NULL,
+        charge_name VARCHAR(100) NOT NULL,
+        amount_due DECIMAL(10, 2) NOT NULL,
+        amount_paid DECIMAL(10, 2) DEFAULT 0,
+        status ENUM('pending', 'partial', 'paid') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (charge_id) REFERENCES charges(id) ON DELETE CASCADE
+      )
+    `);
+
     console.log('Database tables created successfully');
     
     // Create initial admin user if it doesn't exist

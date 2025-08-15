@@ -35,6 +35,7 @@ export interface StudentChargeSummary {
   mandatory_charges: number;
   total_charges: number;
   total_payments: number;
+  total_back_payments: number;
   remaining_balance: number;
 }
 
@@ -42,10 +43,12 @@ export interface StudentChargeBreakdown {
   student: any;
   charges: Charge[];
   payments: any[];
+  backPayments: any[];
   summary: {
     total_charges: number;
     mandatory_charges: number;
     total_payments: number;
+    total_back_payments: number;
     remaining_balance: number;
   };
 }

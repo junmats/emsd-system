@@ -42,10 +42,10 @@ export class AppComponent {
     const url = this.router.url;
     
     if (url.includes('/dashboard')) return 'Dashboard';
-    if (url.includes('/students')) return 'Students';
-    if (url.includes('/payments')) return 'Payments';
-    if (url.includes('/charges')) return 'Charges';
-    
+    if (url.includes('/students')) return 'Student Management';
+    if (url.includes('/payments')) return 'Payment Management';
+    if (url.includes('/charges')) return 'Charge Management';
+
     return 'School System';
   }
 }

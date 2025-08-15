@@ -1,46 +1,25 @@
 <div class="charges-container" (click)="closeDropdown()">
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <h4 class="mb-1">
-          <i class="fas fa-money-bill-wave me-2"></i>
-          School Charges Management
-        </h4>
-        <p class="page-description">Manage school charges by grade level</p>
-      </div>
-      <div>
-        <button class="btn btn-primary" (click)="openAddModal()">
-          <i class="fas fa-plus me-2"></i>
-          Add New Charge
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Charges Management Section -->
   <div class="card">
     <div class="card-header">
       <!-- Navigation Tabs -->
       <ul class="nav nav-tabs card-header-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link" 
-                  [class.active]="activeTab === 'charges'"
-                  (click)="switchTab('charges')"
-                  type="button" role="tab">
-            <i class="fas fa-money-bill-wave me-2"></i>
-            Charge Management
-            <span class="badge bg-primary ms-2" *ngIf="activeTab === 'charges'">{{ filteredCharges.length }}</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link"
+          <button class="nav-link d-flex align-items-center" 
                   [class.active]="activeTab === 'students'"
                   (click)="switchTab('students')"
                   type="button" role="tab">
-            <i class="fas fa-users me-2"></i>
             Student Charges
-            <span class="badge bg-info ms-2" *ngIf="activeTab === 'students'">{{ filteredStudentCharges.length }}</span>
+            <span class="badge bg-primary ms-2" *ngIf="activeTab === 'students'">{{ filteredStudentCharges.length }}</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link d-flex align-items-center" 
+                  [class.active]="activeTab === 'charges'"
+                  (click)="switchTab('charges')"
+                  type="button" role="tab">
+            Charge Management
+            <span class="badge bg-primary ms-2" *ngIf="activeTab === 'charges'">{{ filteredCharges.length }}</span>
           </button>
         </li>
       </ul>
@@ -57,11 +36,8 @@
       <div class="row mb-4">
         <div class="col-md-3">
           <label for="searchInput" class="form-label">Search Charges</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" id="searchInput" placeholder="Search by name or description..." 
-                   [(ngModel)]="searchTerm" (input)="onSearchChange()">
-          </div>
+          <input type="text" class="form-control" id="searchInput" placeholder="Search by name or description..." 
+                 [(ngModel)]="searchTerm" (input)="onSearchChange()">
         </div>
         <div class="col-md-2">
           <label for="gradeFilter" class="form-label">Grade Level</label>
@@ -89,10 +65,10 @@
           <label class="form-label">&nbsp;</label>
           <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary" (click)="clearFilters()">
-              <i class="fas fa-times me-1"></i>Clear Filters
+              Clear Filters
             </button>
             <button class="btn btn-primary" (click)="openAddModal()">
-              <i class="fas fa-plus me-1"></i>Add Charge
+              Add Charge
             </button>
           </div>
         </div>
@@ -108,16 +84,14 @@
 
       <!-- Error State -->
       <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>
         {{ error }}
         <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadCharges()">
-          <i class="fas fa-redo me-1"></i>Retry
+          Retry
         </button>
       </div>
 
       <!-- No Charges Message -->
       <div *ngIf="!loading && !error && filteredCharges.length === 0" class="text-center py-5">
-        <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
         <h5 class="text-muted">No Charges Found</h5>
         <p class="text-muted">
           <span *ngIf="!searchTerm && !selectedGradeFilter && !selectedTypeFilter && selectedStatusFilter === 'active'">No charges are currently defined in the system.</span>
@@ -134,31 +108,24 @@
                 <thead class="table-light">
                   <tr>
                     <th scope="col">
-                      <i class="fas fa-tag me-1"></i>
                       Charge Name
                     </th>
                     <th scope="col">
-                      <i class="fas fa-layer-group me-1"></i>
                       Grade Level
                     </th>
                     <th scope="col">
-                      <i class="fas fa-list me-1"></i>
                       Type
                     </th>
                     <th scope="col">
-                      <i class="fas fa-dollar-sign me-1"></i>
                       Amount
                     </th>
                     <th scope="col">
-                      <i class="fas fa-exclamation-circle me-1"></i>
                       Mandatory
                     </th>
                     <th scope="col">
-                      <i class="fas fa-toggle-on me-1"></i>
                       Status
                     </th>
                     <th scope="col">
-                      <i class="fas fa-cogs me-1"></i>
                       Actions
                     </th>
                   </tr>
@@ -181,7 +148,7 @@
                             [class.bg-primary]="charge.charge_type === 'tuition'"
                             [class.bg-success]="charge.charge_type === 'books'"
                             [class.bg-warning]="charge.charge_type === 'uniform'"
-                            [class.bg-info]="charge.charge_type === 'activities'"
+                            [class.bg-dark]="charge.charge_type === 'activities'"
                             [class.bg-secondary]="charge.charge_type === 'other'">
                         {{ getChargeTypeLabel(charge.charge_type) }}
                       </span>
@@ -210,12 +177,12 @@
                         <button class="btn btn-sm btn-outline-secondary" 
                                 title="Edit Charge"
                                 (click)="openEditModal(charge)">
-                          <i class="fas fa-edit"></i>
+                          Edit
                         </button>
                         <button class="btn btn-sm btn-outline-danger" 
                                 title="Delete Charge"
                                 (click)="openDeleteModal(charge)">
-                          <i class="fas fa-trash"></i>
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -238,11 +205,8 @@
           <div class="row mb-4">
             <div class="col-md-4">
               <label for="studentSearchInput" class="form-label">Search Students</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" id="studentSearchInput" placeholder="Search by name or student ID..." 
-                       [(ngModel)]="studentSearchTerm" (input)="onStudentSearchChange()">
-              </div>
+              <input type="text" class="form-control" id="studentSearchInput" placeholder="Search by name or student ID..." 
+                     [(ngModel)]="studentSearchTerm" (input)="onStudentSearchChange()">
             </div>
             <div class="col-md-2">
               <label for="studentGradeFilter" class="form-label">Grade Level</label>
@@ -263,10 +227,10 @@
               <label class="form-label">&nbsp;</label>
               <div class="d-flex gap-2">
                 <button class="btn btn-outline-secondary" (click)="clearStudentFilters()">
-                  <i class="fas fa-times me-1"></i>Clear Filters
+                  Clear Filters
                 </button>
                 <button class="btn btn-success" (click)="loadStudentCharges()">
-                  <i class="fas fa-sync me-1"></i>Refresh
+                  Refresh
                 </button>
               </div>
             </div>
@@ -282,16 +246,14 @@
 
           <!-- Error State -->
           <div *ngIf="error && !studentChargesLoading && activeTab === 'students'" class="alert alert-danger" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
             {{ error }}
             <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadStudentCharges()">
-              <i class="fas fa-redo me-1"></i>Retry
+              Retry
             </button>
           </div>
 
           <!-- No Students Message -->
           <div *ngIf="!studentChargesLoading && !error && filteredStudentCharges.length === 0" class="text-center py-5">
-            <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">No Students Found</h5>
             <p class="text-muted">
               <span *ngIf="!studentSearchTerm && !selectedStudentGradeFilter">No students with charges found in the system.</span>
@@ -306,31 +268,27 @@
                 <thead class="table-light">
                   <tr>
                     <th scope="col">
-                      <i class="fas fa-user me-1"></i>
                       Student
                     </th>
                     <th scope="col">
-                      <i class="fas fa-layer-group me-1"></i>
                       Grade Level
                     </th>
                     <th scope="col">
-                      <i class="fas fa-dollar-sign me-1"></i>
-                      Total Charges
+                      Current Charges
                     </th>
                     <th scope="col">
-                      <i class="fas fa-credit-card me-1"></i>
-                      Total Payments
+                      Back Payments
                     </th>
                     <th scope="col">
-                      <i class="fas fa-balance-scale me-1"></i>
+                      Total Paid
+                    </th>
+                    <th scope="col">
                       Remaining Balance
                     </th>
                     <th scope="col">
-                      <i class="fas fa-info-circle me-1"></i>
                       Status
                     </th>
                     <th scope="col">
-                      <i class="fas fa-cogs me-1"></i>
                       Actions
                     </th>
                   </tr>
@@ -355,6 +313,12 @@
                       </small>
                     </td>
                     <td>
+                      <strong [class.text-warning]="student.total_back_payments > 0"
+                              [class.text-muted]="student.total_back_payments === 0">
+                        {{ formatCurrency(student.total_back_payments || 0) }}
+                      </strong>
+                    </td>
+                    <td>
                       <strong class="text-success">{{ formatCurrency(student.total_payments) }}</strong>
                     </td>
                     <td>
@@ -367,7 +331,7 @@
                       <span class="badge" 
                             [class.bg-success]="student.status === 'active'"
                             [class.bg-warning]="student.status === 'inactive'"
-                            [class.bg-info]="student.status === 'graduated'">
+                            [class.bg-secondary]="student.status === 'graduated'">
                         {{ student.status | titlecase }}
                       </span>
                     </td>
@@ -375,7 +339,6 @@
                       <button class="btn btn-sm btn-outline-primary" 
                               title="View Charge Breakdown"
                               (click)="openStudentBreakdownModal(student)">
-                        <i class="fas fa-eye"></i>
                         Breakdown
                       </button>
                     </td>
@@ -392,48 +355,77 @@
 
 <!-- Add Charge Modal -->
 <div class="modal fade" [class.show]="showAddModal" [style.display]="showAddModal ? 'block' : 'none'" *ngIf="showAddModal">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div class="modal-dialog modal-lg" style="max-height: 90vh; margin: 5vh auto;">
+    <div class="modal-content" style="height: 100%; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <h5 class="modal-title">
-          <i class="fas fa-plus me-2 text-primary"></i>
           Add New Charge
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1rem;">
         <form>
           <div class="row">
             <div class="col-md-8 mb-3">
               <label for="chargeName" class="form-label">Charge Name *</label>
-              <input type="text" class="form-control" id="chargeName" 
-                     [(ngModel)]="formCharge.name" name="chargeName" 
-                     placeholder="e.g., Tuition Fee, Science Books, PE Uniform" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['name']"
+                     id="chargeName" 
+                     [(ngModel)]="formCharge.name" 
+                     name="chargeName" 
+                     placeholder="e.g., Tuition Fee, Science Books, PE Uniform" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['name']">
+                {{ formErrors['name'] }}
+              </div>
             </div>
             <div class="col-md-4 mb-3">
               <label for="chargeType" class="form-label">Charge Type *</label>
-              <select class="form-select" id="chargeType" [(ngModel)]="formCharge.charge_type" name="chargeType" required>
+              <select class="form-select" 
+                      [class.is-invalid]="formErrors['charge_type']"
+                      id="chargeType" 
+                      [(ngModel)]="formCharge.charge_type" 
+                      name="chargeType" 
+                      required>
                 <option *ngFor="let type of chargeTypes" [value]="type.value">{{ type.label }}</option>
               </select>
+              <div class="invalid-feedback" *ngIf="formErrors['charge_type']">
+                {{ formErrors['charge_type'] }}
+              </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="chargeAmount" class="form-label">Amount (₱) *</label>
-              <input type="number" class="form-control" id="chargeAmount" 
-                     [(ngModel)]="formCharge.amount" name="chargeAmount" 
-                     min="0" step="0.01" placeholder="0.00" required>
+              <input type="number" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['amount']"
+                     id="chargeAmount" 
+                     [(ngModel)]="formCharge.amount" 
+                     name="chargeAmount" 
+                     min="0" 
+                     step="0.01" 
+                     placeholder="0.00" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['amount']">
+                {{ formErrors['amount'] }}
+              </div>
             </div>
             <div class="col-md-6 mb-3">
               <label for="gradeLevelMultiSelect" class="form-label">Grade Levels *</label>
               <div class="dropdown" (click)="$event.stopPropagation()">
                 <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" 
+                        [class.is-invalid]="formErrors['grade_levels']"
                         type="button" 
                         id="gradeLevelMultiSelect" 
                         (click)="toggleDropdown()"
                         [attr.aria-expanded]="showDropdown">
                   {{ getSelectedGradesText() }}
                 </button>
+                <div class="invalid-feedback" *ngIf="formErrors['grade_levels']">
+                  {{ formErrors['grade_levels'] }}
+                </div>
                 <ul class="dropdown-menu w-100" 
                     [class.show]="showDropdown" 
                     [style.display]="showDropdown ? 'block' : 'none'"
@@ -503,11 +495,10 @@
           </div>
         </form>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-shrink: 0;">
         <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
         <button type="button" class="btn btn-primary" (click)="submitAddCharge()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          <i *ngIf="!submitting" class="fas fa-save me-2"></i>
           {{ submitting ? 'Adding...' : 'Add Charge' }}
         </button>
       </div>
@@ -517,43 +508,76 @@
 
 <!-- Edit Charge Modal -->
 <div class="modal fade" [class.show]="showEditModal" [style.display]="showEditModal ? 'block' : 'none'" *ngIf="showEditModal">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div class="modal-dialog modal-lg" style="max-height: 90vh; margin: 5vh auto;">
+    <div class="modal-content" style="height: 100%; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <h5 class="modal-title">
-          <i class="fas fa-edit me-2 text-primary"></i>
           Edit Charge: {{ selectedCharge?.name }}
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1rem;">
         <form>
           <div class="row">
             <div class="col-md-8 mb-3">
               <label for="editChargeName" class="form-label">Charge Name *</label>
-              <input type="text" class="form-control" id="editChargeName" 
-                     [(ngModel)]="formCharge.name" name="editChargeName" 
-                     placeholder="e.g., Tuition Fee, Science Books, PE Uniform" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['name']"
+                     id="editChargeName" 
+                     [(ngModel)]="formCharge.name" 
+                     name="editChargeName" 
+                     placeholder="e.g., Tuition Fee, Science Books, PE Uniform" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['name']">
+                {{ formErrors['name'] }}
+              </div>
             </div>
             <div class="col-md-4 mb-3">
               <label for="editChargeType" class="form-label">Charge Type *</label>
-              <select class="form-select" id="editChargeType" [(ngModel)]="formCharge.charge_type" name="editChargeType" required>
+              <select class="form-select" 
+                      [class.is-invalid]="formErrors['charge_type']"
+                      id="editChargeType" 
+                      [(ngModel)]="formCharge.charge_type" 
+                      name="editChargeType" 
+                      required>
                 <option *ngFor="let type of chargeTypes" [value]="type.value">{{ type.label }}</option>
               </select>
+              <div class="invalid-feedback" *ngIf="formErrors['charge_type']">
+                {{ formErrors['charge_type'] }}
+              </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="editChargeAmount" class="form-label">Amount (₱) *</label>
-              <input type="number" class="form-control" id="editChargeAmount" 
-                     [(ngModel)]="formCharge.amount" name="editChargeAmount" 
-                     min="0" step="0.01" placeholder="0.00" required>
+              <input type="number" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['amount']"
+                     id="editChargeAmount" 
+                     [(ngModel)]="formCharge.amount" 
+                     name="editChargeAmount" 
+                     min="0" 
+                     step="0.01" 
+                     placeholder="0.00" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['amount']">
+                {{ formErrors['amount'] }}
+              </div>
             </div>
             <div class="col-md-6 mb-3">
               <label for="editGradeLevel" class="form-label">Grade Level *</label>
-              <select class="form-select" id="editGradeLevel" [(ngModel)]="formCharge.grade_level" name="editGradeLevel" required>
+              <select class="form-select" 
+                      [class.is-invalid]="formErrors['grade_level']"
+                      id="editGradeLevel" 
+                      [(ngModel)]="formCharge.grade_level" 
+                      name="editGradeLevel" 
+                      required>
                 <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
               </select>
+              <div class="invalid-feedback" *ngIf="formErrors['grade_level']">
+                {{ formErrors['grade_level'] }}
+              </div>
             </div>
           </div>
           <div class="row">
@@ -588,12 +612,11 @@
           </div>
         </form>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-shrink: 0;">
         <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
         <button type="button" class="btn btn-primary" (click)="submitEditCharge()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          <i *ngIf="!submitting" class="fas fa-save me-2"></i>
-          {{ submitting ? 'Updating...' : 'Update Charge' }}
+          {{ submitting ? 'Updating...' : 'Update' }}
         </button>
       </div>
     </div>
@@ -602,16 +625,15 @@
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" [class.show]="showDeleteModal" [style.display]="showDeleteModal ? 'block' : 'none'" *ngIf="showDeleteModal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div class="modal-dialog" style="max-height: 90vh; margin: 5vh auto;">
+    <div class="modal-content" style="height: 100%; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <h5 class="modal-title">
-          <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
           Confirm Delete
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
       </div>
-      <div class="modal-body" *ngIf="selectedCharge">
+      <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1rem;" *ngIf="selectedCharge">
         <p>Are you sure you want to delete the following charge?</p>
         <div class="alert alert-warning">
           <strong>{{ selectedCharge.name }}</strong><br>
@@ -619,11 +641,10 @@
         </div>
         <p class="text-danger"><strong>Warning:</strong> This action cannot be undone.</p>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-shrink: 0;">
         <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
         <button type="button" class="btn btn-danger" (click)="confirmDeleteCharge()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          <i *ngIf="!submitting" class="fas fa-trash me-2"></i>
           {{ submitting ? 'Deleting...' : 'Delete Charge' }}
         </button>
       </div>
@@ -633,16 +654,16 @@
 
 <!-- Student Charge Breakdown Modal -->
 <div class="modal fade" [class.show]="showStudentBreakdownModal" [style.display]="showStudentBreakdownModal ? 'block' : 'none'" *ngIf="showStudentBreakdownModal">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div class="modal-dialog modal-xl" style="max-height: 90vh; margin: 5vh auto;">
+    <div class="modal-content" style="height: 100%; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <h5 class="modal-title">
           <i class="fas fa-user-graduate me-2 text-primary"></i>
           Charge Breakdown: {{ selectedStudent ? getStudentFullName(selectedStudent) : '' }}
         </h5>
         <button type="button" class="btn-close" (click)="closeStudentBreakdownModal()"></button>
       </div>
-      <div class="modal-body" *ngIf="studentBreakdown">
+      <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1rem;" *ngIf="studentBreakdown">
         <!-- Student Info -->
         <div class="row mb-4">
           <div class="col-md-6">
@@ -653,7 +674,7 @@
               <span class="badge ms-1" 
                     [class.bg-success]="studentBreakdown.student.status === 'active'"
                     [class.bg-warning]="studentBreakdown.student.status === 'inactive'"
-                    [class.bg-info]="studentBreakdown.student.status === 'graduated'">
+                    [class.bg-secondary]="studentBreakdown.student.status === 'graduated'">
                 {{ studentBreakdown.student.status | titlecase }}
               </span>
             </p>
@@ -662,6 +683,9 @@
             <h6 class="text-muted mb-3">Financial Summary</h6>
             <p><strong>Total Charges:</strong> <span class="text-primary">{{ formatCurrency(studentBreakdown.summary.total_charges) }}</span></p>
             <p><strong>Mandatory Charges:</strong> <span class="text-warning">{{ formatCurrency(studentBreakdown.summary.mandatory_charges) }}</span></p>
+            <p *ngIf="studentBreakdown.summary.total_back_payments && studentBreakdown.summary.total_back_payments > 0">
+              <strong>Back Payments:</strong> <span class="text-warning">{{ formatCurrency(studentBreakdown.summary.total_back_payments) }}</span>
+            </p>
             <p><strong>Total Payments:</strong> <span class="text-success">{{ formatCurrency(studentBreakdown.summary.total_payments) }}</span></p>
             <p><strong>Remaining Balance:</strong> 
               <span [class.text-danger]="studentBreakdown.summary.remaining_balance > 0"
@@ -674,7 +698,7 @@
 
         <div class="row">
           <!-- Charges Section -->
-          <div class="col-md-6">
+          <div class="col-md-4" [class.col-md-6]="!studentBreakdown.backPayments || studentBreakdown.backPayments.length === 0">
             <h6 class="text-muted mb-3">
               <i class="fas fa-money-bill-wave me-2"></i>
               Assigned Charges ({{ studentBreakdown.charges.length }})
@@ -686,7 +710,6 @@
                     <th>Charge</th>
                     <th>Type</th>
                     <th>Amount</th>
-                    <th>Required</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -704,18 +727,53 @@
                             [class.bg-primary]="charge.charge_type === 'tuition'"
                             [class.bg-success]="charge.charge_type === 'books'"
                             [class.bg-warning]="charge.charge_type === 'uniform'"
-                            [class.bg-info]="charge.charge_type === 'activities'"
+                            [class.bg-dark]="charge.charge_type === 'activities'"
                             [class.bg-secondary]="charge.charge_type === 'other'">
                         {{ getChargeTypeLabel(charge.charge_type) }}
                       </span>
                     </td>
                     <td><strong>{{ formatCurrency(charge.amount) }}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Back Payments Section -->
+          <div class="col-md-4" *ngIf="studentBreakdown.backPayments && studentBreakdown.backPayments.length > 0">
+            <h6 class="text-muted mb-3">
+              <i class="fas fa-history me-2"></i>
+              Back Payments ({{ studentBreakdown.backPayments.length }})
+            </h6>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+              <table class="table table-sm">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>Charge</th>
+                    <th>Level</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let backPayment of studentBreakdown.backPayments">
                     <td>
-                      <span class="badge badge-sm" 
-                            [class.bg-danger]="charge.is_mandatory"
-                            [class.bg-secondary]="!charge.is_mandatory">
-                        {{ charge.is_mandatory ? 'Required' : 'Optional' }}
+                      <div>
+                        <strong>{{ backPayment.charge_name }}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge bg-warning text-dark">
+                        Grade {{ backPayment.original_grade_level }}
                       </span>
+                    </td>
+                    <td>
+                      <div>
+                        <strong class="text-warning">{{ formatCurrency((backPayment.amount_due || 0) - (backPayment.amount_paid || 0)) }}</strong>
+                        <br>
+                        <small class="text-muted">
+                          Paid: {{ formatCurrency(backPayment.amount_paid) }}
+                        </small>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -724,7 +782,7 @@
           </div>
 
           <!-- Payments Section -->
-          <div class="col-md-6">
+          <div class="col-md-4" [class.col-md-6]="!studentBreakdown.backPayments || studentBreakdown.backPayments.length === 0">
             <h6 class="text-muted mb-3">
               <i class="fas fa-credit-card me-2"></i>
               Payment History ({{ studentBreakdown.payments.length }})
@@ -762,13 +820,13 @@
           </div>
         </div>
       </div>
-      <div class="modal-body text-center" *ngIf="submitting && !studentBreakdown">
+      <div class="modal-body text-center" style="flex: 1; overflow-y: auto; padding: 1rem;" *ngIf="submitting && !studentBreakdown">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
         <p class="mt-2 text-muted">Loading charge breakdown...</p>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-shrink: 0;">
         <button type="button" class="btn btn-secondary" (click)="closeStudentBreakdownModal()">Close</button>
       </div>
     </div>
@@ -781,18 +839,15 @@
 <!-- Toast Container -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
   <div *ngFor="let toast of toasts" 
-       class="toast show align-items-center border-0" 
+       class="toast show align-items-center border-0 toast-animate" 
        [class.text-bg-success]="toast.type === 'success'"
        [class.text-bg-danger]="toast.type === 'error'"
        [class.text-bg-warning]="toast.type === 'warning'"
        [class.text-bg-info]="toast.type === 'info'"
+       [class.toast-exit]="toast.isRemoving"
        role="alert">
     <div class="d-flex">
       <div class="toast-body">
-        <i class="fas fa-check-circle me-2" *ngIf="toast.type === 'success'"></i>
-        <i class="fas fa-exclamation-circle me-2" *ngIf="toast.type === 'error'"></i>
-        <i class="fas fa-exclamation-triangle me-2" *ngIf="toast.type === 'warning'"></i>
-        <i class="fas fa-info-circle me-2" *ngIf="toast.type === 'info'"></i>
         {{ toast.message }}
       </div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="removeToast(toast.id)"></button>
@@ -802,19 +857,19 @@
 
 <!-- Confirmation Modal -->
 <div class="modal fade" [class.show]="showConfirmationModal" [style.display]="showConfirmationModal ? 'block' : 'none'" *ngIf="showConfirmationModal">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div class="modal-dialog" style="max-height: 90vh; margin: 5vh auto;">
+    <div class="modal-content" style="height: 100%; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
         <h5 class="modal-title">
           <i class="fas fa-question-circle me-2"></i>
           {{ confirmationTitle }}
         </h5>
         <button type="button" class="btn-close" (click)="closeConfirmationModal()"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1rem;">
         <p class="mb-0" style="white-space: pre-line;">{{ confirmationMessage }}</p>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-shrink: 0;">
         <button type="button" class="btn btn-secondary" (click)="closeConfirmationModal()">Cancel</button>
         <button type="button" class="btn" [class]="confirmationButtonClass" (click)="executeConfirmationAction()">
           {{ confirmationButtonText }}

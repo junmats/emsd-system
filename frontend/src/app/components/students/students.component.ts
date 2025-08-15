@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StudentService, Student } from '../../services/student.service';
+import { StudentService, Student, StudentUpdateResponse, BackPaymentInfo } from '../../services/student.service';
 
 @Component({
   selector: 'app-students',
@@ -42,8 +42,11 @@ export class StudentsComponent implements OnInit {
   bulkUpgrading = false;
 
   // Toast notifications
-  toasts: { message: string; type: 'success' | 'error' | 'warning' | 'info'; id: number }[] = [];
+  toasts: { message: string; type: 'success' | 'error' | 'warning' | 'info'; id: number; isRemoving?: boolean }[] = [];
   toastIdCounter = 0;
+
+  // Form validation errors
+  formErrors: { [key: string]: string } = {};
 
   // Confirmation modal
   showConfirmationModal = false;
@@ -52,6 +55,13 @@ export class StudentsComponent implements OnInit {
   confirmationAction: (() => void) | null = null;
   confirmationButtonText = 'Confirm';
   confirmationButtonClass = 'btn-primary';
+
+  // Back payment confirmation
+  showBackPaymentModal = false;
+  backPaymentInfo: BackPaymentInfo | null = null;
+  pendingUpgradeAction: (() => void) | null = null;
+  existingBackPayments: any[] = [];
+  loadingBackPayments = false;
 
   constructor(private studentService: StudentService) {}
 
@@ -169,19 +179,13 @@ export class StudentsComponent implements OnInit {
 
   // CRUD Methods
   openAddModal() {
+    // Get current date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
     this.formStudent = {
-      student_number: '',
-      first_name: '',
-      last_name: '',
-      grade_level: 1,
-      date_of_birth: '',
-      address: '',
-      parent_name: '',
-      parent_contact: '',
-      parent_email: '',
-      status: 'active',
-      enrollment_date: new Date().toISOString().split('T')[0] // Default to today
+      enrollment_date: today,
+      status: 'active'
     };
+    this.formErrors = {}; // Clear validation errors
     this.showAddModal = true;
   }
 
@@ -207,6 +211,7 @@ export class StudentsComponent implements OnInit {
 
   openEditModal(student: Student) {
     this.selectedStudent = student;
+    this.formErrors = {}; // Clear validation errors
     this.formStudent = {
       student_number: student.student_number,
       first_name: student.first_name,
@@ -240,9 +245,14 @@ export class StudentsComponent implements OnInit {
     this.showViewModal = false;
     this.showUpgradeModal = false;
     this.showConfirmationModal = false;
+    this.showBackPaymentModal = false;
     this.selectedStudent = null;
     this.formStudent = {};
     this.confirmationAction = null;
+    this.pendingUpgradeAction = null;
+    this.existingBackPayments = [];
+    this.loadingBackPayments = false;
+    this.backPaymentInfo = null;
   }
 
   submitAddStudent() {
@@ -271,11 +281,61 @@ export class StudentsComponent implements OnInit {
   submitEditStudent() {
     if (!this.validateForm() || !this.selectedStudent) return;
 
+    const originalGrade = this.selectedStudent.grade_level;
+    const newGrade = this.formStudent.grade_level;
+
+    // Check if grade level is being upgraded
+    if (newGrade && newGrade > originalGrade) {
+      // Check for back payments first
+      this.submitting = true;
+      this.studentService.checkBackPayments(this.selectedStudent.id, newGrade).subscribe({
+        next: (response: any) => {
+          if (response.success && response.hasBackPayments) {
+            // Load existing back payments before showing the modal
+            this.studentService.getBackPayments(this.selectedStudent!.id).subscribe({
+              next: (existingResponse: any) => {
+                this.submitting = false;
+                this.existingBackPayments = existingResponse.success ? existingResponse.data : [];
+                // Show back payment confirmation with existing payments
+                this.backPaymentInfo = response.backPaymentInfo;
+                this.pendingUpgradeAction = () => this.proceedWithEditUpgrade();
+                this.showBackPaymentModal = true;
+              },
+              error: (err: any) => {
+                this.submitting = false;
+                this.existingBackPayments = [];
+                // Still show the modal even if we can't load existing payments
+                this.backPaymentInfo = response.backPaymentInfo;
+                this.pendingUpgradeAction = () => this.proceedWithEditUpgrade();
+                this.showBackPaymentModal = true;
+              }
+            });
+          } else {
+            // No back payments, proceed with regular edit
+            this.submitting = false;
+            this.proceedWithEditUpgrade();
+          }
+        },
+        error: (err: any) => {
+          this.submitting = false;
+          this.showToast('Failed to check back payments. Please try again.', 'error');
+          console.error('Error checking back payments:', err);
+        }
+      });
+    } else {
+      // Regular edit without grade upgrade
+      this.proceedWithEditUpgrade();
+    }
+  }
+
+  proceedWithEditUpgrade() {
+    if (!this.selectedStudent) return;
+
     this.submitting = true;
     this.studentService.updateStudent(this.selectedStudent.id, this.formStudent).subscribe({
-      next: (response) => {
+      next: (response: StudentUpdateResponse) => {
         if (response.success) {
-          this.loadStudents(); // Reload the list
+          this.loadStudents();
           this.closeModals();
           this.showToast('Student updated successfully!', 'success');
         } else {
@@ -315,27 +375,41 @@ export class StudentsComponent implements OnInit {
   }
 
   validateForm(): boolean {
+    this.formErrors = {}; // Clear previous errors
+    let isValid = true;
+
     if (!this.formStudent.student_number?.trim()) {
-      this.showToast('Student number is required', 'error');
-      return false;
+      this.formErrors['student_number'] = 'Student number is required';
+      isValid = false;
     }
     if (!this.formStudent.first_name?.trim()) {
-      this.showToast('First name is required', 'error');
-      return false;
+      this.formErrors['first_name'] = 'First name is required';
+      isValid = false;
     }
     if (!this.formStudent.last_name?.trim()) {
-      this.showToast('Last name is required', 'error');
-      return false;
+      this.formErrors['last_name'] = 'Last name is required';
+      isValid = false;
     }
     if (!this.formStudent.grade_level || this.formStudent.grade_level < 1 || this.formStudent.grade_level > 6) {
-      this.showToast('Valid grade level (1-6) is required', 'error');
-      return false;
+      this.formErrors['grade_level'] = 'Valid grade level (1-6) is required';
+      isValid = false;
+    }
+    if (!this.formStudent.enrollment_date?.trim()) {
+      this.formErrors['enrollment_date'] = 'Enrollment date is required';
+      isValid = false;
     }
     if (this.formStudent.parent_email && !this.isValidEmail(this.formStudent.parent_email)) {
-      this.showToast('Please enter a valid email address', 'error');
-      return false;
+      this.formErrors['parent_email'] = 'Please enter a valid email address';
+      isValid = false;
     }
-    return true;
+
+    // Show first error as toast
+    if (!isValid) {
+      const firstError = Object.values(this.formErrors)[0];
+      this.showToast(firstError, 'error');
+    }
+
+    return isValid;
   }
 
   isValidEmail(email: string): boolean {
@@ -346,34 +420,110 @@ export class StudentsComponent implements OnInit {
   confirmUpgrade() {
     if (!this.selectedStudent) return;
 
-    this.submitting = true;
     const isGraduating = this.selectedStudent.grade_level === 6;
-    
-    const updateData: any = {
-      grade_level: isGraduating ? 6 : this.selectedStudent.grade_level + 1,
-      status: isGraduating ? 'graduated' : 'active'
-    };
+    const newGradeLevel = isGraduating ? 6 : this.selectedStudent.grade_level + 1;
+    const newStatus = isGraduating ? 'graduated' : 'active';
 
-    this.studentService.updateStudent(this.selectedStudent.id, updateData).subscribe({
-      next: (response) => {
-        this.submitting = false; // Reset submitting first
-        if (response.success) {
-          this.loadStudents(); // Reload the list
-          this.closeModals();
-          const message = isGraduating 
-            ? `${this.getStudentFullName(this.selectedStudent!)} has been graduated!`
-            : `${this.getStudentFullName(this.selectedStudent!)} has been upgraded to Grade ${updateData.grade_level}!`;
-          this.showToast(message, 'success');
+    // First check for back payments
+    this.submitting = true;
+    this.studentService.checkBackPayments(this.selectedStudent.id, newGradeLevel).subscribe({
+      next: (response: any) => {
+        if (response.success && response.hasBackPayments) {
+          // Load existing back payments before showing the modal
+          this.studentService.getBackPayments(this.selectedStudent!.id).subscribe({
+            next: (existingResponse: any) => {
+              this.submitting = false;
+              this.existingBackPayments = existingResponse.success ? existingResponse.data : [];
+              // Show back payment confirmation with existing payments
+              this.backPaymentInfo = response.backPaymentInfo;
+              this.pendingUpgradeAction = () => this.proceedWithUpgrade(newGradeLevel, newStatus, response.backPaymentInfo.unpaidCharges);
+              this.showBackPaymentModal = true;
+            },
+            error: (err: any) => {
+              this.submitting = false;
+              this.existingBackPayments = [];
+              // Still show the modal even if we can't load existing payments
+              this.backPaymentInfo = response.backPaymentInfo;
+              this.pendingUpgradeAction = () => this.proceedWithUpgrade(newGradeLevel, newStatus, response.backPaymentInfo.unpaidCharges);
+              this.showBackPaymentModal = true;
+            }
+          });
         } else {
-          this.showToast('Failed to upgrade student: ' + (response.message || 'Unknown error'), 'error');
+          // No back payments, proceed directly
+          this.submitting = false;
+          this.proceedWithUpgrade(newGradeLevel, newStatus, []);
         }
       },
-      error: (err) => {
-        this.submitting = false; // Reset submitting on error too
-        this.showToast('Failed to upgrade student. Please try again.', 'error');
-        console.error('Error upgrading student:', err);
+      error: (err: any) => {
+        this.submitting = false;
+        this.showToast('Failed to check back payments. Please try again.', 'error');
+        console.error('Error checking back payments:', err);
       }
     });
+  }
+
+  proceedWithUpgrade(newGradeLevel: number, newStatus: string, unpaidCharges: any[]) {
+    if (!this.selectedStudent) return;
+
+    this.submitting = true;
+    const studentName = this.getStudentFullName(this.selectedStudent);
+    const isGraduating = newStatus === 'graduated';
+
+    if (unpaidCharges.length > 0) {
+      // Use the new upgrade with back payments endpoint
+      this.studentService.upgradeWithBackPayments(this.selectedStudent.id, newGradeLevel, newStatus, unpaidCharges).subscribe({
+        next: (response) => {
+          this.submitting = false;
+          if (response.success) {
+            this.loadStudents();
+            this.closeModals();
+            
+            const totalAmount = unpaidCharges.reduce((sum, charge) => sum + (charge.amount_due - charge.amount_paid), 0);
+            let message = isGraduating 
+              ? `${studentName} has been graduated!`
+              : `${studentName} has been upgraded to Grade ${newGradeLevel}!`;
+            message += ` Back payments of ₱${totalAmount.toFixed(2)} have been carried over.`;
+            
+            this.showToast(message, 'success');
+          } else {
+            this.showToast('Failed to upgrade student: ' + (response.message || 'Unknown error'), 'error');
+          }
+        },
+        error: (err) => {
+          this.submitting = false;
+          this.showToast('Failed to upgrade student. Please try again.', 'error');
+          console.error('Error upgrading student:', err);
+        }
+      });
+    } else {
+      // Regular upgrade without back payments
+      const updateData: Partial<Student> = { 
+        grade_level: newGradeLevel, 
+        status: newStatus as 'active' | 'inactive' | 'graduated'
+      };
+      this.studentService.updateStudent(this.selectedStudent.id, updateData).subscribe({
+        next: (response) => {
+          this.submitting = false;
+          if (response.success) {
+            this.loadStudents();
+            this.closeModals();
+            
+            const message = isGraduating 
+              ? `${studentName} has been graduated!`
+              : `${studentName} has been upgraded to Grade ${newGradeLevel}!`;
+            
+            this.showToast(message, 'success');
+          } else {
+            this.showToast('Failed to upgrade student: ' + (response.message || 'Unknown error'), 'error');
+          }
+        },
+        error: (err) => {
+          this.submitting = false;
+          this.showToast('Failed to upgrade student. Please try again.', 'error');
+          console.error('Error upgrading student:', err);
+        }
+      });
+    }
   }
 
   // Bulk Operations Methods
@@ -489,42 +639,91 @@ export class StudentsComponent implements OnInit {
       return;
     }
 
-    const graduatingStudents = activeStudents.filter(s => s.grade_level === 6);
-    const upgradingStudents = activeStudents.filter(s => s.grade_level < 6);
+    // Check for back payments for all students
+    this.bulkUpgrading = true;
+    const backPaymentChecks = activeStudents.map(student => {
+      const isGraduating = student.grade_level === 6;
+      const newGradeLevel = isGraduating ? 6 : student.grade_level + 1;
+      
+      return this.studentService.checkBackPayments(student.id, newGradeLevel).toPromise()
+        .then(response => ({
+          student,
+          newGradeLevel,
+          isGraduating,
+          hasBackPayments: response?.hasBackPayments || false,
+          backPaymentInfo: response?.backPaymentInfo || null
+        }));
+    });
 
-    let confirmMessage = `Are you sure you want to upgrade ${activeStudents.length} student(s)?\n\n`;
-    
-    if (upgradingStudents.length > 0) {
-      confirmMessage += `Students to be upgraded to next grade:\n`;
-      upgradingStudents.forEach(s => {
-        confirmMessage += `• ${this.getStudentFullName(s)} (Grade ${s.grade_level} → Grade ${s.grade_level + 1})\n`;
-      });
-    }
+    Promise.all(backPaymentChecks).then(results => {
+      this.bulkUpgrading = false;
+      
+      const studentsWithBackPayments = results.filter(r => r.hasBackPayments);
+      const graduatingStudents = results.filter(r => r.isGraduating);
+      const upgradingStudents = results.filter(r => !r.isGraduating);
 
-    if (graduatingStudents.length > 0) {
-      confirmMessage += `\nStudents to be graduated:\n`;
-      graduatingStudents.forEach(s => {
-        confirmMessage += `• ${this.getStudentFullName(s)} (Grade ${s.grade_level} → Graduated)\n`;
-      });
-    }
+      let confirmMessage = `Are you sure you want to upgrade ${activeStudents.length} student(s)?\n\n`;
+      
+      if (upgradingStudents.length > 0) {
+        confirmMessage += `Students to be upgraded to next grade:\n`;
+        upgradingStudents.forEach(r => {
+          const backPaymentNote = r.hasBackPayments ? ` (⚠️ Has back payments)` : '';
+          confirmMessage += `• ${this.getStudentFullName(r.student)} (Grade ${r.student.grade_level} → Grade ${r.newGradeLevel})${backPaymentNote}\n`;
+        });
+      }
 
-    this.showConfirmation(
-      'Upgrade Selected Students',
-      confirmMessage,
-      () => this.executeBulkUpgrade(activeStudents),
-      'Upgrade All',
-      'btn-success'
-    );
+      if (graduatingStudents.length > 0) {
+        confirmMessage += `\nStudents to be graduated:\n`;
+        graduatingStudents.forEach(r => {
+          const backPaymentNote = r.hasBackPayments ? ` (⚠️ Has back payments)` : '';
+          confirmMessage += `• ${this.getStudentFullName(r.student)} (Grade ${r.student.grade_level} → Graduated)${backPaymentNote}\n`;
+        });
+      }
+
+      if (studentsWithBackPayments.length > 0) {
+        const totalBackPayments = studentsWithBackPayments.reduce((sum, r) => 
+          sum + (r.backPaymentInfo?.totalAmount || 0), 0);
+        confirmMessage += `\n⚠️ WARNING: ${studentsWithBackPayments.length} student(s) have unpaid charges that will become back payments (Total: ₱${totalBackPayments.toFixed(2)})`;
+      }
+
+      this.showConfirmation(
+        'Bulk Upgrade Students',
+        confirmMessage,
+        () => this.executeBulkUpgrade(results),
+        'Upgrade All',
+        'btn-success'
+      );
+    }).catch(error => {
+      this.bulkUpgrading = false;
+      this.showToast('An error occurred while checking for back payments. Please try again.', 'error');
+      console.error('Bulk back payment check error:', error);
+    });
   }
 
-  private executeBulkUpgrade(activeStudents: Student[]) {
-    const upgradePromises = activeStudents.map(student => {
-      const isGraduating = student.grade_level === 6;
-      const updateData = isGraduating 
-        ? { status: 'graduated' as const }
-        : { grade_level: student.grade_level + 1 };
+  private executeBulkUpgrade(studentResults: any[]) {
+    this.bulkUpgrading = true;
+    const upgradePromises = studentResults.map(result => {
+      const student = result.student;
+      const newGradeLevel = result.newGradeLevel;
+      const isGraduating = result.isGraduating;
+      const newStatus = isGraduating ? 'graduated' : 'active';
       
-      return this.studentService.updateStudent(student.id, updateData).toPromise();
+      if (result.hasBackPayments && result.backPaymentInfo?.unpaidCharges) {
+        // Use upgrade with back payments
+        return this.studentService.upgradeWithBackPayments(
+          student.id, 
+          newGradeLevel, 
+          newStatus, 
+          result.backPaymentInfo.unpaidCharges
+        ).toPromise();
+      } else {
+        // Regular upgrade
+        const updateData = isGraduating 
+          ? { status: 'graduated' as const }
+          : { grade_level: newGradeLevel };
+        
+        return this.studentService.updateStudent(student.id, updateData).toPromise();
+      }
     });
 
     Promise.all(upgradePromises).then(results => {
@@ -532,13 +731,20 @@ export class StudentsComponent implements OnInit {
       const successCount = results.filter(result => result?.success).length;
       const failCount = results.length - successCount;
 
+      // Check for back payments in results
+      const backPaymentStudents = studentResults.filter(sr => sr.hasBackPayments);
+
       if (successCount > 0) {
         this.loadStudents();
         this.clearSelection();
       }
 
       if (failCount === 0) {
-        this.showToast(`Successfully upgraded ${successCount} student(s).`, 'success');
+        let message = `Successfully upgraded ${successCount} student(s).`;
+        if (backPaymentStudents.length > 0) {
+          message += ` Note: ${backPaymentStudents.length} student(s) have back payments that were carried over.`;
+        }
+        this.showToast(message, 'success');
       } else {
         this.showToast(`Upgraded ${successCount} student(s). Failed to upgrade ${failCount} student(s).`, 'warning');
       }
@@ -569,7 +775,14 @@ export class StudentsComponent implements OnInit {
   }
 
   removeToast(id: number) {
-    this.toasts = this.toasts.filter(toast => toast.id !== id);
+    const toast = this.toasts.find(t => t.id === id);
+    if (toast) {
+      toast.isRemoving = true;
+      // Remove after animation completes
+      setTimeout(() => {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+      }, 300);
+    }
   }
 
   // Confirmation Modal Methods
@@ -598,5 +811,29 @@ export class StudentsComponent implements OnInit {
   closeConfirmationModal() {
     this.showConfirmationModal = false;
     this.confirmationAction = null;
+  }
+
+  // Back Payment Methods
+  showBackPaymentNotification() {
+    this.showBackPaymentModal = true;
+  }
+
+  closeBackPaymentModal() {
+    this.showBackPaymentModal = false;
+    this.backPaymentInfo = null;
+    this.pendingUpgradeAction = null;
+  }
+
+  confirmBackPaymentUpgrade() {
+    if (this.pendingUpgradeAction) {
+      this.pendingUpgradeAction();
+    }
+    this.closeBackPaymentModal();
+  }
+
+  getTotalOutstanding(): number {
+    return this.existingBackPayments.reduce((total, payment) => {
+      return total + (payment.amount_due - payment.amount_paid);
+    }, 0);
   }
 }

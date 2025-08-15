@@ -120,8 +120,18 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
        (student_number, first_name, last_name, grade_level, date_of_birth, 
         address, parent_name, parent_contact, parent_email, enrollment_date)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [student_number, first_name, last_name, grade_level, date_of_birth,
-       address, parent_name, parent_contact, parent_email, enrollment_date]
+      [
+        student_number, 
+        first_name, 
+        last_name, 
+        grade_level, 
+        date_of_birth || null,
+        address || null, 
+        parent_name || null, 
+        parent_contact || null, 
+        parent_email || null, 
+        enrollment_date
+      ]
     );
 
     res.status(201).json({
@@ -157,15 +167,18 @@ router.put('/:id', requireRole(['admin', 'staff']), async (req: AuthRequest, res
 
     const connection = getConnection();
     
-    // Check if student exists
+    // Check if student exists and get current grade level
     const [existing] = await connection.execute(
-      'SELECT id FROM students WHERE id = ?',
+      'SELECT id, grade_level, first_name, last_name FROM students WHERE id = ?',
       [id]
     );
 
     if (!Array.isArray(existing) || existing.length === 0) {
       return next(createError('Student not found', 404));
     }
+
+    const currentStudent = existing[0] as any;
+    const currentGradeLevel = currentStudent.grade_level;
 
     // Build update query dynamically
     const updates: string[] = [];
@@ -187,25 +200,25 @@ router.put('/:id', requireRole(['admin', 'staff']), async (req: AuthRequest, res
       updates.push('grade_level = ?');
       values.push(grade_level);
     }
-    if (date_of_birth) {
+    if (date_of_birth !== undefined) {
       updates.push('date_of_birth = ?');
-      values.push(date_of_birth);
+      values.push(date_of_birth || null);
     }
-    if (address) {
+    if (address !== undefined) {
       updates.push('address = ?');
-      values.push(address);
+      values.push(address || null);
     }
-    if (parent_name) {
+    if (parent_name !== undefined) {
       updates.push('parent_name = ?');
-      values.push(parent_name);
+      values.push(parent_name || null);
     }
-    if (parent_contact) {
+    if (parent_contact !== undefined) {
       updates.push('parent_contact = ?');
-      values.push(parent_contact);
+      values.push(parent_contact || null);
     }
-    if (parent_email) {
+    if (parent_email !== undefined) {
       updates.push('parent_email = ?');
-      values.push(parent_email);
+      values.push(parent_email || null);
     }
     if (status) {
       updates.push('status = ?');
@@ -226,6 +239,213 @@ router.put('/:id', requireRole(['admin', 'staff']), async (req: AuthRequest, res
     res.json({
       success: true,
       message: 'Student updated successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Check for back payments before upgrade
+router.post('/:id/check-back-payments', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { new_grade_level } = req.body;
+    const connection = getConnection();
+    
+    // Get current student info
+    const [existing] = await connection.execute(
+      'SELECT id, grade_level, first_name, last_name FROM students WHERE id = ?',
+      [id]
+    );
+
+    if (!Array.isArray(existing) || existing.length === 0) {
+      return next(createError('Student not found', 404));
+    }
+
+    const currentStudent = existing[0] as any;
+    const currentGradeLevel = currentStudent.grade_level;
+
+    if (new_grade_level <= currentGradeLevel) {
+      return res.json({
+        success: true,
+        hasBackPayments: false,
+        backPaymentInfo: null
+      });
+    }
+
+    console.log(`Checking for back payments for student ${id}, current grade: ${currentGradeLevel}, new grade: ${new_grade_level}`);
+    
+    // Check existing unpaid student charges
+    const [unpaidCharges] = await connection.execute(`
+      SELECT sc.*, c.name as charge_name, c.charge_type 
+      FROM student_charges sc
+      JOIN charges c ON sc.charge_id = c.id
+      WHERE sc.student_id = ? 
+      AND (sc.status = 'pending' OR sc.status = 'partial' OR sc.status = 'overdue')
+      AND (c.grade_level = ? OR c.grade_level IS NULL)
+      AND sc.amount_due > sc.amount_paid
+    `, [id, currentGradeLevel]);
+
+    // Check for mandatory charges that should apply but aren't assigned yet
+    const [unassignedCharges] = await connection.execute(`
+      SELECT c.*, c.amount as amount_due, 0 as amount_paid, 'pending' as status
+      FROM charges c
+      WHERE c.is_active = 1 
+      AND c.is_mandatory = 1
+      AND (c.grade_level = ? OR c.grade_level IS NULL)
+      AND c.id NOT IN (
+        SELECT COALESCE(sc.charge_id, 0) 
+        FROM student_charges sc 
+        WHERE sc.student_id = ?
+      )
+    `, [currentGradeLevel, id]);
+
+    // Combine both types of charges
+    const allUnpaidCharges = [
+      ...(Array.isArray(unpaidCharges) ? unpaidCharges : []),
+      ...(Array.isArray(unassignedCharges) ? unassignedCharges.map((c: any) => ({
+        ...c,
+        charge_id: c.id,
+        charge_name: c.name,
+        charge_type: c.charge_type
+      })) : [])
+    ];
+
+    if (allUnpaidCharges.length > 0) {
+      const totalUnpaid = allUnpaidCharges.reduce((sum: number, charge: any) => 
+        sum + (charge.amount_due - charge.amount_paid), 0);
+      
+      const backPaymentInfo = {
+        student: currentStudent,
+        unpaidCharges: allUnpaidCharges,
+        totalAmount: totalUnpaid,
+        originalGrade: currentGradeLevel,
+        newGrade: new_grade_level
+      };
+      
+      return res.json({
+        success: true,
+        hasBackPayments: true,
+        backPaymentInfo: backPaymentInfo
+      });
+    }
+
+    res.json({
+      success: true,
+      hasBackPayments: false,
+      backPaymentInfo: null
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Create back payments and upgrade student
+router.post('/:id/upgrade-with-back-payments', requireRole(['admin', 'staff']), async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { new_grade_level, status, unpaid_charges } = req.body;
+    const connection = getConnection();
+    
+    // Get current student info
+    const [existing] = await connection.execute(
+      'SELECT id, grade_level, first_name, last_name FROM students WHERE id = ?',
+      [id]
+    );
+
+    if (!Array.isArray(existing) || existing.length === 0) {
+      return next(createError('Student not found', 404));
+    }
+
+    const currentStudent = existing[0] as any;
+    const currentGradeLevel = currentStudent.grade_level;
+
+    // Update student grade level
+    await connection.execute(
+      'UPDATE students SET grade_level = ?, status = ? WHERE id = ?',
+      [new_grade_level, status || 'active', id]
+    );
+
+    // Create back payment records for unpaid charges
+    if (unpaid_charges && Array.isArray(unpaid_charges)) {
+      for (const charge of unpaid_charges) {
+        const unpaidAmount = charge.amount_due - charge.amount_paid;
+        if (unpaidAmount > 0) {
+          // If this charge wasn't in student_charges yet, create the student_charge record first
+          if (!charge.id) { // This means it was from unassigned charges
+            await connection.execute(`
+              INSERT INTO student_charges (student_id, charge_id, amount_due, amount_paid, status)
+              VALUES (?, ?, ?, ?, ?)
+            `, [id, charge.charge_id, charge.amount_due, charge.amount_paid, 'pending']);
+          }
+          
+          // Create back payment record
+          await connection.execute(`
+            INSERT INTO back_payments (student_id, original_grade_level, current_grade_level, charge_id, charge_name, amount_due, amount_paid, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `, [
+            id, 
+            currentGradeLevel, 
+            new_grade_level, 
+            charge.charge_id, 
+            charge.charge_name, 
+            unpaidAmount, 
+            0, 
+            'pending'
+          ]);
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Student upgraded successfully with back payments created'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get student charges
+router.get('/:id/charges', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const connection = getConnection();
+    
+    const [studentCharges] = await connection.execute(`
+      SELECT sc.*, c.name as charge_name, c.charge_type, c.grade_level
+      FROM student_charges sc
+      JOIN charges c ON sc.charge_id = c.id
+      WHERE sc.student_id = ?
+      ORDER BY c.grade_level, c.charge_type
+    `, [id]);
+
+    res.json({
+      success: true,
+      data: studentCharges
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get student back payments
+router.get('/:id/back-payments', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const connection = getConnection();
+    
+    const [backPayments] = await connection.execute(`
+      SELECT bp.*, s.first_name, s.last_name, s.student_number
+      FROM back_payments bp
+      JOIN students s ON bp.student_id = s.id
+      WHERE bp.student_id = ?
+      ORDER BY bp.created_at DESC
+    `, [id]);
+
+    res.json({
+      success: true,
+      data: backPayments
     });
   } catch (error) {
     next(error);

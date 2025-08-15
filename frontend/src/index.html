@@ -12,6 +12,128 @@
   
   <!-- Font Awesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Button Overrides -->
+  <style>
+    /* Ultra-specific targeting for secondary outline buttons only */
+    .btn-outline-secondary {
+      color: #6c757d !important;
+      border-color: #6c757d !important;
+      background-color: transparent !important;
+    }
+    
+    .btn-outline-secondary:hover {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: #ffffff !important;
+    }
+    
+    .btn-outline-secondary:focus {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+    }
+    
+    .btn-outline-secondary:active {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: #ffffff !important;
+    }
+    
+    /* Even more specific targeting */
+    button.btn.btn-outline-secondary {
+      color: #6c757d !important;
+      border: 1px solid #6c757d !important;
+      background-color: transparent !important;
+    }
+    
+    button.btn.btn-outline-secondary:hover,
+    button.btn.btn-outline-secondary:focus,
+    button.btn.btn-outline-secondary:active {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: #ffffff !important;
+    }
+    
+    /* Bootstrap 5 specific overrides */
+    .btn-outline-secondary:not(:disabled):not(.disabled):active,
+    .btn-outline-secondary:not(:disabled):not(.disabled).active,
+    .show > .btn-outline-secondary.dropdown-toggle {
+      color: #ffffff !important;
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+    }
+    
+    /* Small button variant */
+    .btn-sm.btn-outline-secondary {
+      color: #6c757d !important;
+      border-color: #6c757d !important;
+      background-color: transparent !important;
+    }
+    
+    .btn-sm.btn-outline-secondary:hover,
+    .btn-sm.btn-outline-secondary:focus,
+    .btn-sm.btn-outline-secondary:active {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: #ffffff !important;
+    }
+    
+    /* MODAL SPECIFIC OVERRIDES - Higher specificity for modal buttons */
+    .modal .btn-outline-secondary,
+    .modal-content .btn-outline-secondary,
+    .modal-footer .btn-outline-secondary,
+    .modal-body .btn-outline-secondary,
+    .modal-header .btn-outline-secondary {
+      color: #6c757d !important;
+      border: 1px solid #6c757d !important;
+      background-color: transparent !important;
+      text-decoration: none !important;
+    }
+    
+    .modal .btn-outline-secondary:hover,
+    .modal .btn-outline-secondary:focus,
+    .modal .btn-outline-secondary:active,
+    .modal-content .btn-outline-secondary:hover,
+    .modal-content .btn-outline-secondary:focus,
+    .modal-content .btn-outline-secondary:active,
+    .modal-footer .btn-outline-secondary:hover,
+    .modal-footer .btn-outline-secondary:focus,
+    .modal-footer .btn-outline-secondary:active {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: #ffffff !important;
+    }
+    
+    /* Bootstrap Modal backdrop z-index fix */
+    .modal {
+      z-index: 1050 !important;
+    }
+    
+    .modal-backdrop {
+      z-index: 1040 !important;
+    }
+    
+    /* Secondary button specifically for Cancel buttons in modals */
+    .modal .btn.btn-secondary,
+    .modal-footer .btn.btn-secondary {
+      color: #ffffff !important;
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+    }
+    
+    .modal .btn.btn-secondary:hover,
+    .modal .btn.btn-secondary:focus,
+    .modal .btn.btn-secondary:active,
+    .modal-footer .btn.btn-secondary:hover,
+    .modal-footer .btn.btn-secondary:focus,
+    .modal-footer .btn.btn-secondary:active {
+      background-color: #5a6268 !important;
+      border-color: #545b62 !important;
+      color: #ffffff !important;
+    }
+  </style>
 </head>
 <body>
   <app-root></app-root>

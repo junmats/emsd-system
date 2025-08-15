@@ -20,6 +20,40 @@ export interface Student {
   updated_at: string;
 }
 
+export interface BackPayment {
+  id: number;
+  student_id: number;
+  original_grade_level: number;
+  current_grade_level: number;
+  charge_id: number;
+  charge_name: string;
+  amount_due: number;
+  amount_paid: number;
+  status: 'pending' | 'partial' | 'paid';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackPaymentInfo {
+  hasBackPayments: boolean;
+  unpaidCharges: any[];
+  totalAmount: number;
+  originalGrade: number;
+  newGrade: number;
+  student?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    grade_level: number;
+  };
+}
+
+export interface StudentUpdateResponse {
+  success: boolean;
+  message: string;
+  backPaymentInfo?: BackPaymentInfo;
+}
+
 export interface StudentListResponse {
   success: boolean;
   data: Student[];
@@ -107,8 +141,28 @@ export class StudentService {
     return this.http.post(this.apiUrl, student);
   }
 
-  updateStudent(id: number, student: Partial<Student>): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}`, student);
+  updateStudent(id: number, student: Partial<Student>): Observable<StudentUpdateResponse> {
+    return this.http.put<StudentUpdateResponse>(`${this.apiUrl}/${id}`, student);
+  }
+
+  getStudentBackPayments(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}/back-payments`);
+  }
+
+  checkBackPayments(id: number, newGradeLevel: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/check-back-payments`, { new_grade_level: newGradeLevel });
+  }
+
+  getBackPayments(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}/back-payments`);
+  }
+
+  upgradeWithBackPayments(id: number, newGradeLevel: number, status: string, unpaidCharges: any[]): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/upgrade-with-back-payments`, {
+      new_grade_level: newGradeLevel,
+      status: status,
+      unpaid_charges: unpaidCharges
+    });
   }
 
   deleteStudent(id: number): Observable<any> {

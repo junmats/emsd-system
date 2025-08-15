@@ -45,8 +45,11 @@ export class ChargesComponent implements OnInit {
   ];
 
   // Toast notifications
-  toasts: { message: string; type: 'success' | 'error' | 'warning' | 'info'; id: number }[] = [];
+  toasts: { message: string; type: 'success' | 'error' | 'warning' | 'info'; id: number; isRemoving?: boolean }[] = [];
   toastIdCounter = 0;
+
+  // Form validation errors
+  formErrors: { [key: string]: string } = {};
 
   // Confirmation modal
   showConfirmationModal = false;
@@ -57,7 +60,7 @@ export class ChargesComponent implements OnInit {
   confirmationButtonClass = 'btn-primary';
 
   // Student charges properties
-  activeTab: 'charges' | 'students' = 'charges';
+  activeTab: 'charges' | 'students' = 'students';
   studentCharges: StudentChargeSummary[] = [];
   filteredStudentCharges: StudentChargeSummary[] = [];
   studentChargesLoading = false;
@@ -73,7 +76,12 @@ export class ChargesComponent implements OnInit {
   constructor(private chargeService: ChargeService) {}
 
   ngOnInit() {
-    this.loadCharges();
+    // Load data based on the active tab
+    if (this.activeTab === 'students') {
+      this.loadStudentCharges();
+    } else {
+      this.loadCharges();
+    }
   }
 
   loadCharges() {
@@ -178,11 +186,13 @@ export class ChargesComponent implements OnInit {
     };
     this.selectedGradeLevels = []; // Reset multi-select
     this.showDropdown = false; // Reset dropdown state
+    this.formErrors = {}; // Clear validation errors
     this.showAddModal = true;
   }
 
   openEditModal(charge: Charge) {
     this.selectedCharge = charge;
+    this.formErrors = {}; // Clear validation errors
     this.formCharge = {
       name: charge.name,
       description: charge.description || '',
@@ -337,23 +347,39 @@ export class ChargesComponent implements OnInit {
   }
 
   validateForm(): boolean {
+    this.formErrors = {}; // Clear previous errors
+    let isValid = true;
+
     if (!this.formCharge.name?.trim()) {
-      this.showToast('Charge name is required', 'error');
-      return false;
+      this.formErrors['name'] = 'Charge name is required';
+      isValid = false;
     }
     if (!this.formCharge.amount || this.formCharge.amount <= 0) {
-      this.showToast('Amount must be greater than 0', 'error');
-      return false;
+      this.formErrors['amount'] = 'Amount must be greater than 0';
+      isValid = false;
     }
     if (!this.formCharge.charge_type) {
-      this.showToast('Charge type is required', 'error');
-      return false;
+      this.formErrors['charge_type'] = 'Charge type is required';
+      isValid = false;
     }
-    if (!this.formCharge.grade_level || this.formCharge.grade_level < 1 || this.formCharge.grade_level > 6) {
-      this.showToast('Valid grade level (1-6) is required', 'error');
-      return false;
+    // For add modal, check selectedGradeLevels; for edit modal, check grade_level
+    if (this.showAddModal) {
+      if (!this.selectedGradeLevels || this.selectedGradeLevels.length === 0) {
+        this.formErrors['grade_levels'] = 'At least one grade level is required';
+        isValid = false;
+      }
+    } else if (!this.formCharge.grade_level || this.formCharge.grade_level < 1 || this.formCharge.grade_level > 6) {
+      this.formErrors['grade_level'] = 'Valid grade level (1-6) is required';
+      isValid = false;
     }
-    return true;
+
+    // Show first error as toast
+    if (!isValid) {
+      const firstError = Object.values(this.formErrors)[0];
+      this.showToast(firstError, 'error');
+    }
+
+    return isValid;
   }
 
   // Toast Methods
@@ -372,7 +398,14 @@ export class ChargesComponent implements OnInit {
   }
 
   removeToast(id: number) {
-    this.toasts = this.toasts.filter(toast => toast.id !== id);
+    const toast = this.toasts.find(t => t.id === id);
+    if (toast) {
+      toast.isRemoving = true;
+      // Remove after animation completes
+      setTimeout(() => {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+      }, 300);
+    }
   }
 
   // Confirmation Modal Methods
@@ -453,11 +486,14 @@ export class ChargesComponent implements OnInit {
     this.activeTab = tab;
     if (tab === 'students' && this.studentCharges.length === 0) {
       this.loadStudentCharges();
+    } else if (tab === 'charges' && this.charges.length === 0) {
+      this.loadCharges();
     }
   }
 
   // Student charges methods
   loadStudentCharges() {
+    console.log('Loading student charges...');
     this.studentChargesLoading = true;
     this.error = null;
 
@@ -466,20 +502,24 @@ export class ChargesComponent implements OnInit {
       params.grade_level = this.selectedStudentGradeFilter;
     }
 
+    console.log('Student charges params:', params);
+
     this.chargeService.getStudentChargesSummary(params).subscribe({
       next: (response) => {
+        console.log('Student charges response:', response);
         if (response.success) {
           this.studentCharges = response.data;
           this.updateFilteredStudentCharges();
+          console.log('Student charges loaded:', this.studentCharges.length);
         } else {
           this.error = 'Failed to load student charges';
         }
         this.studentChargesLoading = false;
       },
       error: (err) => {
+        console.error('Error loading student charges:', err);
         this.studentChargesLoading = false;
         this.error = 'Failed to load student charges. Please try again.';
-        console.error('Error loading student charges:', err);
       }
     });
   }
@@ -562,8 +602,21 @@ export class ChargesComponent implements OnInit {
     return `${student.first_name} ${student.last_name}`;
   }
 
-  formatCurrency(amount: number): string {
-    return `₱${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  formatCurrency(amount: number | string | null | undefined): string {
+    // Handle null, undefined, or empty values
+    if (amount === null || amount === undefined || amount === '') {
+      return '₱0.00';
+    }
+    
+    // Convert to number if it's a string, and handle any parsing issues
+    const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    // Check if the conversion resulted in a valid number
+    if (isNaN(numericAmount)) {
+      return '₱0.00';
+    }
+    
+    return `₱${numericAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   formatDate(dateString: string): string {

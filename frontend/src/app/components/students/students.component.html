@@ -1,24 +1,8 @@
 <div class="students-container">
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <p class="page-description">Manage and view all students</p>
-      </div>
-      <div>
-        <button class="btn btn-primary" (click)="openAddModal()">
-          <i class="fas fa-plus me-2"></i>
-          Add New Student
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Student Management Section -->
   <div class="card">
     <div class="card-header">
-      <h5 class="mb-0">
-        <i class="fas fa-list me-2"></i>
+      <h5 class="mb-0 d-flex align-items-center">
         All Students
         <span class="badge bg-primary ms-2">{{ filteredStudents.length }}</span>
       </h5>
@@ -29,11 +13,8 @@
       <div class="row mb-4">
         <div class="col-md-4">
           <label for="searchInput" class="form-label">Search Students</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" id="searchInput" placeholder="Search by name or student ID..." 
-                   [(ngModel)]="searchTerm" (input)="onSearchChange()">
-          </div>
+          <input type="text" class="form-control" id="searchInput" placeholder="Search by name or student ID..." 
+                 [(ngModel)]="searchTerm" (input)="onSearchChange()">
         </div>
         <div class="col-md-2">
           <label for="gradeFilter" class="form-label">Grade Level</label>
@@ -55,10 +36,10 @@
           <label class="form-label">&nbsp;</label>
           <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary" (click)="clearFilters()">
-              <i class="fas fa-times me-1"></i>Clear Filters
+              Clear Filters
             </button>
             <button class="btn btn-primary" (click)="openAddModal()">
-              <i class="fas fa-plus me-1"></i>Add Student
+              Add Student
             </button>
           </div>
         </div>
@@ -67,25 +48,22 @@
       <!-- Bulk Actions Bar -->
       <div *ngIf="showBulkActions" class="alert alert-info d-flex justify-content-between align-items-center mb-4">
         <div>
-          <i class="fas fa-check-circle me-2"></i>
           <strong>{{ selectedStudents.size }}</strong> student(s) selected
         </div>
         <div class="btn-group" role="group">
           <button class="btn btn-sm btn-outline-secondary" (click)="clearSelection()">
-            <i class="fas fa-times me-1"></i>Clear Selection
+            Clear Selection
           </button>
           <button class="btn btn-sm btn-outline-success" 
                   (click)="bulkUpgrade()" 
                   [disabled]="bulkUpgrading">
             <span *ngIf="bulkUpgrading" class="spinner-border spinner-border-sm me-2"></span>
-            <i *ngIf="!bulkUpgrading" class="fas fa-arrow-up me-1"></i>
             {{ bulkUpgrading ? 'Upgrading...' : 'Upgrade Selected' }}
           </button>
           <button class="btn btn-sm btn-outline-danger" 
                   (click)="bulkDelete()" 
                   [disabled]="bulkDeleting">
             <span *ngIf="bulkDeleting" class="spinner-border spinner-border-sm me-2"></span>
-            <i *ngIf="!bulkDeleting" class="fas fa-trash me-1"></i>
             {{ bulkDeleting ? 'Deleting...' : 'Delete Selected' }}
           </button>
         </div>
@@ -101,16 +79,14 @@
 
       <!-- Error State -->
       <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>
         {{ error }}
         <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadStudents()">
-          <i class="fas fa-redo me-1"></i>Retry
+          Retry
         </button>
       </div>
 
       <!-- No Students Message -->
       <div *ngIf="!loading && !error && filteredStudents.length === 0" class="text-center py-5">
-        <i class="fas fa-user-graduate fa-3x text-muted mb-3"></i>
         <h5 class="text-muted">No Students Found</h5>
         <p class="text-muted">
           <span *ngIf="!searchTerm && !selectedGradeFilter && !selectedStatusFilter">No students are currently enrolled in the system.</span>
@@ -138,27 +114,21 @@
                       </div>
                     </th>
                     <th scope="col">
-                      <i class="fas fa-user me-1"></i>
                       Name
                     </th>
                     <th scope="col">
-                      <i class="fas fa-id-card me-1"></i>
                       Student ID
                     </th>
                     <th scope="col">
-                      <i class="fas fa-layer-group me-1"></i>
                       Grade Level
                     </th>
                     <th scope="col">
-                      <i class="fas fa-calendar me-1"></i>
                       Enrollment Date
                     </th>
                     <th scope="col">
-                      <i class="fas fa-info-circle me-1"></i>
                       Status
                     </th>
                     <th scope="col">
-                      <i class="fas fa-cogs me-1"></i>
                       Actions
                     </th>
                   </tr>
@@ -197,7 +167,7 @@
                       <span class="badge" 
                             [class.bg-success]="student.status === 'active'"
                             [class.bg-warning]="student.status === 'inactive'"
-                            [class.bg-info]="student.status === 'graduated'">
+                            [class.bg-secondary]="student.status === 'graduated'">
                         {{ student.status | titlecase }}
                       </span>
                     </td>
@@ -206,12 +176,12 @@
                         <button class="btn btn-sm btn-outline-primary" 
                                 title="View Details"
                                 (click)="openViewModal(student)">
-                          <i class="fas fa-eye"></i>
+                          View
                         </button>
                         <button class="btn btn-sm btn-outline-secondary" 
                                 title="Edit Student"
                                 (click)="openEditModal(student)">
-                          <i class="fas fa-edit"></i>
+                          Edit
                         </button>
                         <button class="btn btn-sm btn-outline-success" 
                                 title="{{ student.grade_level === 6 ? 'Graduate Student' : 'Upgrade to Grade ' + (student.grade_level + 1) }}"
@@ -222,7 +192,7 @@
                         <button class="btn btn-sm btn-outline-danger" 
                                 title="Delete Student"
                                 (click)="openDeleteModal(student)">
-                          <i class="fas fa-trash"></i>
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -243,24 +213,20 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="fas fa-arrow-up me-2 text-success"></i>
           {{ selectedStudent?.grade_level === 6 ? 'Graduate Student' : 'Upgrade Grade Level' }}
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
       </div>
       <div class="modal-body" *ngIf="selectedStudent">
-        <div class="text-center mb-3">
-          <i class="fas fa-user-graduate fa-3x text-success"></i>
-        </div>
         <p class="text-center">
           <span *ngIf="selectedStudent.grade_level < 6">
             Upgrade <strong>{{ getStudentFullName(selectedStudent) }}</strong> from 
-            <span class="badge bg-primary">Grade {{ selectedStudent.grade_level }}</span> to 
-            <span class="badge bg-success">Grade {{ selectedStudent.grade_level + 1 }}</span>?
+            <strong>Grade {{ selectedStudent.grade_level }}</strong> to 
+            <strong>Grade {{ selectedStudent.grade_level + 1 }}</strong>?
           </span>
           <span *ngIf="selectedStudent.grade_level === 6">
             Graduate <strong>{{ getStudentFullName(selectedStudent) }}</strong> from 
-            <span class="badge bg-primary">Grade {{ selectedStudent.grade_level }}</span>?
+            <strong>Grade {{ selectedStudent.grade_level }}</strong>?
             <br><small class="text-muted">This will change their status to "Graduated"</small>
           </span>
         </p>
@@ -283,7 +249,6 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="fas fa-plus me-2 text-primary"></i>
           Add New Student
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
@@ -293,27 +258,71 @@
           <div class="row">
             <div class="col-md-4 mb-3">
               <label for="studentNumber" class="form-label">Student Number *</label>
-              <input type="text" class="form-control" id="studentNumber" [(ngModel)]="formStudent.student_number" name="studentNumber" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['student_number']"
+                     id="studentNumber" 
+                     [(ngModel)]="formStudent.student_number" 
+                     name="studentNumber" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['student_number']">
+                {{ formErrors['student_number'] }}
+              </div>
             </div>
             <div class="col-md-4 mb-3">
               <label for="firstName" class="form-label">First Name *</label>
-              <input type="text" class="form-control" id="firstName" [(ngModel)]="formStudent.first_name" name="firstName" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['first_name']"
+                     id="firstName" 
+                     [(ngModel)]="formStudent.first_name" 
+                     name="firstName" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['first_name']">
+                {{ formErrors['first_name'] }}
+              </div>
             </div>
             <div class="col-md-4 mb-3">
               <label for="lastName" class="form-label">Last Name *</label>
-              <input type="text" class="form-control" id="lastName" [(ngModel)]="formStudent.last_name" name="lastName" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['last_name']"
+                     id="lastName" 
+                     [(ngModel)]="formStudent.last_name" 
+                     name="lastName" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['last_name']">
+                {{ formErrors['last_name'] }}
+              </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="gradeLevel" class="form-label">Grade Level *</label>
-              <select class="form-select" id="gradeLevel" [(ngModel)]="formStudent.grade_level" name="gradeLevel" required>
+              <select class="form-select" 
+                      [class.is-invalid]="formErrors['grade_level']"
+                      id="gradeLevel" 
+                      [(ngModel)]="formStudent.grade_level" 
+                      name="gradeLevel" 
+                      required>
                 <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
               </select>
+              <div class="invalid-feedback" *ngIf="formErrors['grade_level']">
+                {{ formErrors['grade_level'] }}
+              </div>
             </div>
             <div class="col-md-6 mb-3">
               <label for="enrollmentDate" class="form-label">Enrollment Date *</label>
-              <input type="date" class="form-control" id="enrollmentDate" [(ngModel)]="formStudent.enrollment_date" name="enrollmentDate" required>
+              <input type="date" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['enrollment_date']"
+                     id="enrollmentDate" 
+                     [(ngModel)]="formStudent.enrollment_date" 
+                     name="enrollmentDate" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['enrollment_date']">
+                {{ formErrors['enrollment_date'] }}
+              </div>
             </div>
           </div>
           <div class="row">
@@ -351,7 +360,15 @@
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="parentEmail" class="form-label">Parent Email</label>
-              <input type="email" class="form-control" id="parentEmail" [(ngModel)]="formStudent.parent_email" name="parentEmail">
+              <input type="email" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['parent_email']"
+                     id="parentEmail" 
+                     [(ngModel)]="formStudent.parent_email" 
+                     name="parentEmail">
+              <div class="invalid-feedback" *ngIf="formErrors['parent_email']">
+                {{ formErrors['parent_email'] }}
+              </div>
             </div>
           </div>
         </form>
@@ -360,7 +377,6 @@
         <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
         <button type="button" class="btn btn-primary" (click)="submitAddStudent()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          <i *ngIf="!submitting" class="fas fa-save me-2"></i>
           {{ submitting ? 'Adding...' : 'Add Student' }}
         </button>
       </div>
@@ -374,7 +390,6 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="fas fa-edit me-2 text-primary"></i>
           Edit Student: {{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
@@ -384,23 +399,58 @@
           <div class="row">
             <div class="col-md-4 mb-3">
               <label for="editStudentNumber" class="form-label">Student Number *</label>
-              <input type="text" class="form-control" id="editStudentNumber" [(ngModel)]="formStudent.student_number" name="editStudentNumber" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['student_number']"
+                     id="editStudentNumber" 
+                     [(ngModel)]="formStudent.student_number" 
+                     name="editStudentNumber" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['student_number']">
+                {{ formErrors['student_number'] }}
+              </div>
             </div>
             <div class="col-md-4 mb-3">
               <label for="editFirstName" class="form-label">First Name *</label>
-              <input type="text" class="form-control" id="editFirstName" [(ngModel)]="formStudent.first_name" name="editFirstName" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['first_name']"
+                     id="editFirstName" 
+                     [(ngModel)]="formStudent.first_name" 
+                     name="editFirstName" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['first_name']">
+                {{ formErrors['first_name'] }}
+              </div>
             </div>
             <div class="col-md-4 mb-3">
               <label for="editLastName" class="form-label">Last Name *</label>
-              <input type="text" class="form-control" id="editLastName" [(ngModel)]="formStudent.last_name" name="editLastName" required>
+              <input type="text" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['last_name']"
+                     id="editLastName" 
+                     [(ngModel)]="formStudent.last_name" 
+                     name="editLastName" 
+                     required>
+              <div class="invalid-feedback" *ngIf="formErrors['last_name']">
+                {{ formErrors['last_name'] }}
+              </div>
             </div>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="editGradeLevel" class="form-label">Grade Level *</label>
-              <select class="form-select" id="editGradeLevel" [(ngModel)]="formStudent.grade_level" name="editGradeLevel" required>
+              <select class="form-select" 
+                      [class.is-invalid]="formErrors['grade_level']"
+                      id="editGradeLevel" 
+                      [(ngModel)]="formStudent.grade_level" 
+                      name="editGradeLevel" 
+                      required>
                 <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
               </select>
+              <div class="invalid-feedback" *ngIf="formErrors['grade_level']">
+                {{ formErrors['grade_level'] }}
+              </div>
             </div>
             <div class="col-md-6 mb-3">
               <label for="editEnrollmentDate" class="form-label">Enrollment Date</label>
@@ -442,7 +492,15 @@
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="editParentEmail" class="form-label">Parent Email</label>
-              <input type="email" class="form-control" id="editParentEmail" [(ngModel)]="formStudent.parent_email" name="editParentEmail">
+              <input type="email" 
+                     class="form-control" 
+                     [class.is-invalid]="formErrors['parent_email']"
+                     id="editParentEmail" 
+                     [(ngModel)]="formStudent.parent_email" 
+                     name="editParentEmail">
+              <div class="invalid-feedback" *ngIf="formErrors['parent_email']">
+                {{ formErrors['parent_email'] }}
+              </div>
             </div>
           </div>
         </form>
@@ -451,8 +509,7 @@
         <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
         <button type="button" class="btn btn-primary" (click)="submitEditStudent()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          <i *ngIf="!submitting" class="fas fa-save me-2"></i>
-          {{ submitting ? 'Updating...' : 'Update Student' }}
+          {{ submitting ? 'Updating...' : 'Update' }}
         </button>
       </div>
     </div>
@@ -465,7 +522,6 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="fas fa-eye me-2 text-primary"></i>
           Student Details: {{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
@@ -482,7 +538,7 @@
               <span class="badge ms-1" 
                     [class.bg-success]="selectedStudent.status === 'active'"
                     [class.bg-warning]="selectedStudent.status === 'inactive'"
-                    [class.bg-info]="selectedStudent.status === 'graduated'">
+                    [class.bg-secondary]="selectedStudent.status === 'graduated'">
                 {{ selectedStudent.status | titlecase }}
               </span>
             </p>
@@ -504,7 +560,6 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeModals()">Close</button>
         <button type="button" class="btn btn-primary" (click)="openEditModal(selectedStudent!)">
-          <i class="fas fa-edit me-2"></i>
           Edit Student
         </button>
       </div>
@@ -518,7 +573,6 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
           Confirm Delete
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
@@ -535,7 +589,6 @@
         <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
         <button type="button" class="btn btn-danger" (click)="confirmDeleteStudent()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          <i *ngIf="!submitting" class="fas fa-trash me-2"></i>
           {{ submitting ? 'Deleting...' : 'Delete Student' }}
         </button>
       </div>
@@ -549,18 +602,15 @@
 <!-- Toast Container -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
   <div *ngFor="let toast of toasts" 
-       class="toast show align-items-center border-0" 
+       class="toast show align-items-center border-0 toast-animate" 
        [class.text-bg-success]="toast.type === 'success'"
        [class.text-bg-danger]="toast.type === 'error'"
        [class.text-bg-warning]="toast.type === 'warning'"
        [class.text-bg-info]="toast.type === 'info'"
+       [class.toast-exit]="toast.isRemoving"
        role="alert">
     <div class="d-flex">
       <div class="toast-body">
-        <i class="fas fa-check-circle me-2" *ngIf="toast.type === 'success'"></i>
-        <i class="fas fa-exclamation-circle me-2" *ngIf="toast.type === 'error'"></i>
-        <i class="fas fa-exclamation-triangle me-2" *ngIf="toast.type === 'warning'"></i>
-        <i class="fas fa-info-circle me-2" *ngIf="toast.type === 'info'"></i>
         {{ toast.message }}
       </div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="removeToast(toast.id)"></button>
@@ -574,7 +624,6 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="fas fa-question-circle me-2"></i>
           {{ confirmationTitle }}
         </h5>
         <button type="button" class="btn-close" (click)="closeConfirmationModal()"></button>
@@ -586,6 +635,169 @@
         <button type="button" class="btn btn-secondary" (click)="closeConfirmationModal()">Cancel</button>
         <button type="button" class="btn" [class]="confirmationButtonClass" (click)="executeConfirmationAction()">
           {{ confirmationButtonText }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Back Payment Confirmation Modal -->
+<div class="modal fade" [class.show]="showBackPaymentModal" [style.display]="showBackPaymentModal ? 'block' : 'none'" *ngIf="showBackPaymentModal && backPaymentInfo">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content" style="max-height: 90vh;">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Confirm Upgrade with Back Payments
+        </h5>
+        <button type="button" class="btn-close" (click)="closeBackPaymentModal()"></button>
+      </div>
+      <div class="modal-body" style="max-height: calc(90vh - 130px); overflow-y: auto;">
+        <div class="alert alert-warning">
+          <h6><strong>{{ backPaymentInfo.student?.first_name }} {{ backPaymentInfo.student?.last_name }} has unpaid charges from Grade {{ backPaymentInfo.originalGrade }}</strong></h6>
+          <p class="mb-2">
+            Upgrading to Grade {{ backPaymentInfo.newGrade }} will create back payments for the following unpaid charges:
+          </p>
+        </div>
+        
+        <!-- New Back Payments Section -->
+        <div class="card mb-3">
+          <div class="card-header bg-warning">
+            <h6 class="mb-0">
+              <i class="fas fa-plus-circle me-2"></i>
+              New Back Payments (from Grade {{ backPaymentInfo.originalGrade }})
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Charge</th>
+                    <th>Type</th>
+                    <th class="text-end">Amount Due</th>
+                    <th class="text-end">Amount Paid</th>
+                    <th class="text-end">Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let charge of backPaymentInfo.unpaidCharges">
+                    <td>{{ charge.charge_name }}</td>
+                    <td>
+                      <span class="badge bg-secondary">{{ charge.charge_type }}</span>
+                    </td>
+                    <td class="text-end">₱{{ charge.amount_due | number:'1.2-2' }}</td>
+                    <td class="text-end">₱{{ charge.amount_paid | number:'1.2-2' }}</td>
+                    <td class="text-end">
+                      <strong>₱{{ (charge.amount_due - charge.amount_paid) | number:'1.2-2' }}</strong>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-warning">
+                    <th colspan="4" class="text-end">New Back Payment Total:</th>
+                    <th class="text-end">
+                      <strong>₱{{ backPaymentInfo.totalAmount | number:'1.2-2' }}</strong>
+                    </th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Existing Back Payments Section -->
+        <div class="card mb-3" *ngIf="existingBackPayments.length > 0">
+          <div class="card-header bg-info">
+            <h6 class="mb-0">
+              <i class="fas fa-history me-2"></i>
+              Existing Back Payments (from previous grades)
+              <span class="badge bg-dark ms-2">{{ existingBackPayments.length }}</span>
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>From Grade</th>
+                    <th>Charge</th>
+                    <th class="text-end">Amount Due</th>
+                    <th class="text-end">Amount Paid</th>
+                    <th class="text-end">Balance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let backPayment of existingBackPayments">
+                    <td>Grade {{ backPayment.original_grade_level }}</td>
+                    <td>{{ backPayment.charge_name }}</td>
+                    <td class="text-end">₱{{ backPayment.amount_due | number:'1.2-2' }}</td>
+                    <td class="text-end">₱{{ backPayment.amount_paid | number:'1.2-2' }}</td>
+                    <td class="text-end">
+                      <strong>₱{{ (backPayment.amount_due - backPayment.amount_paid) | number:'1.2-2' }}</strong>
+                    </td>
+                    <td>
+                      <span class="badge" 
+                            [class.bg-warning]="backPayment.status === 'pending'"
+                            [class.bg-primary]="backPayment.status === 'partial'"
+                            [class.bg-success]="backPayment.status === 'paid'">
+                        {{ backPayment.status | titlecase }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-info">
+                    <th colspan="4" class="text-end">Existing Back Payments Total:</th>
+                    <th class="text-end">
+                      <strong>₱{{ getTotalOutstanding() | number:'1.2-2' }}</strong>
+                    </th>
+                    <th></th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Summary -->
+        <div class="alert alert-primary" *ngIf="existingBackPayments.length > 0">
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Financial Summary:</strong>
+              <ul class="mb-0 mt-2">
+                <li>Existing back payments: ₱{{ getTotalOutstanding() | number:'1.2-2' }}</li>
+                <li>New back payments: ₱{{ backPaymentInfo.totalAmount | number:'1.2-2' }}</li>
+              </ul>
+            </div>
+            <div class="col-md-6 text-end">
+              <h5 class="mb-0">
+                <strong>Total Outstanding: ₱{{ (getTotalOutstanding() + backPaymentInfo.totalAmount) | number:'1.2-2' }}</strong>
+              </h5>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alert alert-info">
+          <strong>What happens next:</strong>
+          <ul class="mb-0">
+            <li>The student will be upgraded to Grade {{ backPaymentInfo.newGrade }}</li>
+            <li>The unpaid charges will be recorded as back payments</li>
+            <li *ngIf="existingBackPayments.length > 0">Existing back payments from previous grades will remain unchanged</li>
+            <li>All back payments can be settled later through the payment system</li>
+          </ul>
+        </div>
+        
+        <div class="sticky-bottom bg-white pt-3">
+          <p class="mb-0"><strong>Do you want to proceed with the upgrade?</strong></p>
+        </div>
+      </div>
+      <div class="modal-footer bg-light border-top">
+        <button type="button" class="btn btn-secondary" (click)="closeBackPaymentModal()">Cancel Upgrade</button>
+        <button type="button" class="btn btn-warning" (click)="confirmBackPaymentUpgrade()">
+          <i class="fas fa-arrow-up me-1"></i>
+          Proceed with Upgrade
         </button>
       </div>
     </div>
