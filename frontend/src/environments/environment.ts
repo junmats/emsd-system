@@ -1,0 +1,22 @@
+// Dynamic API URL detection
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Local development
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3000/api';
+    }
+    
+    // Production (Vercel domain or custom domain)
+    return 'https://your-backend-app.railway.app/api';
+  }
+  
+  // Server-side rendering fallback
+  return 'http://localhost:3000/api';
+};
+
+export const environment = {
+  production: false,
+  apiUrl: getApiUrl()
+};

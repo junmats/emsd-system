@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Charge {
   id: number;
@@ -67,7 +68,7 @@ export interface StudentChargeBreakdownResponse {
   providedIn: 'root'
 })
 export class ChargeService {
-  private apiUrl = 'http://localhost:3000/api/charges';
+  private apiUrl = `${environment.apiUrl}/charges`;
 
   constructor(private http: HttpClient) { }
 
