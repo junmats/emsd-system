@@ -9,7 +9,7 @@ const getApiUrl = () => {
     }
     
     // Production (Vercel domain or custom domain)
-    return 'https://your-backend-app.railway.app/api';
+    return 'https://emsd-system-production.up.railway.app/api';
   }
   
   // Server-side rendering fallback

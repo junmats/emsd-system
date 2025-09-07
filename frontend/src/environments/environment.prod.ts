@@ -9,11 +9,11 @@ const getApiUrl = () => {
     }
     
     // Production - Update this with your actual Railway backend URL
-    return 'emsd-system-production.up.railway.app/api';
+    return 'https://emsd-system-production.up.railway.app/api';
   }
   
   // Server-side rendering fallback
-  return 'emsd-system-production.up.railway.app/api';
+  return 'https://emsd-system-production.up.railway.app/api';
 };
 
 export const environment = {
