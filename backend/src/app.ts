@@ -62,18 +62,29 @@ app.use('/api/students', studentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/charges', chargeRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Root endpoint
+app.get('/', (req, res) => {
   res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    message: 'EMSD School System API',
+    version: '1.0.0',
+    endpoints: [
+      '/api/health',
+      '/api/auth/login',
+      '/api/students',
+      '/api/payments',
+      '/api/charges'
+    ]
   });
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'School System API is running' });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    message: 'School System API is running'
+  });
 });
 
 // Error handling middleware
