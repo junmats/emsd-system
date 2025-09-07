@@ -39,8 +39,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     }
     
     const offset = (Number(page) - 1) * Number(limit);
-    query += ' ORDER BY p.payment_date DESC, p.created_at DESC LIMIT ? OFFSET ?';
-    params.push(Number(limit), offset);
+    query += ` ORDER BY p.payment_date DESC, p.created_at DESC LIMIT ${Number(limit)} OFFSET ${offset}`;
     
     const [payments] = await connection.execute(query, params);
     
@@ -300,8 +299,8 @@ router.get('/student/:student_id', async (req: AuthRequest, res: Response, next:
        JOIN users u ON p.created_by = u.id
        WHERE p.student_id = ?
        ORDER BY p.payment_date DESC, p.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [student_id, Number(limit), offset]
+       LIMIT ${Number(limit)} OFFSET ${offset}`,
+      [student_id]
     );
 
     // Get payment items for each payment
