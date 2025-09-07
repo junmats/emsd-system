@@ -375,3 +375,85 @@ html {
   border-color: var(--danger-color) !important;
   color: var(--white) !important;
 }
+
+/* App Layout Styles - Moved from component to reduce CSS budget */
+.sidebar-toggle, .mobile-toggle, .desktop-toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover, .mobile-toggle:hover, .desktop-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  text-decoration: none;
+}
+
+.logo i {
+  font-size: 1.5rem;
+  color: #ffc107;
+}
+
+.logo-text {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.logout-btn {
+  background: rgba(220, 53, 69, 0.1);
+  color: #ff6b7d;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  margin-top: auto;
+  margin-bottom: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.logout-btn:hover {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.5);
+  color: #ff5a6b;
+}
+
+.nav-text {
+  margin-left: 0.75rem;
+}
+
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .logo-text {
+  display: none;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar.collapsed + .main-content {
+  margin-left: 70px;
+}
+
+@media (max-width: 768px) {
+  .sidebar.collapsed {
+    margin-left: -70px;
+  }
+  
+  .sidebar.collapsed + .main-content {
+    margin-left: 0;
+  }
+}
