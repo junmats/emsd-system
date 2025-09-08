@@ -1,31 +1,27 @@
 import mysql from 'mysql2/promise';
 
-let connection: mysql.Connection;
+let pool: mysql.Pool;
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    // First connect without specifying database to create it if needed
-    const tempConnection = await mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '3306'),
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-    });
-
-    // Create database if it doesn't exist
-    await tempConnection.execute(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || 'emsd_system'}\``);
-    await tempConnection.end();
-
-    // Now connect to the specific database
-    connection = await mysql.createConnection({
+    // Create connection pool
+    pool = mysql.createPool({
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '3306'),
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'emsd_system',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
     });
 
-    console.log(`Connected to MySQL database: ${process.env.DB_NAME || 'emsd_system'}`);
+    console.log(`Connected to MySQL database pool: ${process.env.DB_NAME || 'emsd_system'}`);
+    
+    // Test the connection
+    const testConnection = await pool.getConnection();
+    await testConnection.execute('SELECT 1');
+    testConnection.release();
     
     // Create tables if they don't exist
     await createTables();
@@ -35,17 +31,17 @@ export const connectDatabase = async (): Promise<void> => {
   }
 };
 
-export const getConnection = (): mysql.Connection => {
-  if (!connection) {
+export const getConnection = (): mysql.Pool => {
+  if (!pool) {
     throw new Error('Database not connected');
   }
-  return connection;
+  return pool;
 };
 
 const createTables = async (): Promise<void> => {
   try {
     // Users table
-    await connection.execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
@@ -58,7 +54,7 @@ const createTables = async (): Promise<void> => {
     `);
 
     // Students table
-    await connection.execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS students (
         id INT AUTO_INCREMENT PRIMARY KEY,
         student_number VARCHAR(20) UNIQUE NOT NULL,
@@ -78,7 +74,7 @@ const createTables = async (): Promise<void> => {
     `);
 
     // Charges table
-    await connection.execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS charges (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
@@ -94,7 +90,7 @@ const createTables = async (): Promise<void> => {
     `);
 
     // Payments table
-    await connection.execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS payments (
         id INT AUTO_INCREMENT PRIMARY KEY,
         student_id INT NOT NULL,
@@ -111,7 +107,7 @@ const createTables = async (): Promise<void> => {
     `);
 
     // Payment items table (detailed breakdown of each payment)
-    await connection.execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS payment_items (
         id INT AUTO_INCREMENT PRIMARY KEY,
         payment_id INT NOT NULL,
@@ -126,7 +122,7 @@ const createTables = async (): Promise<void> => {
     `);
 
     // Student charges (linking students to their applicable charges)
-    await connection.execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS student_charges (
         id INT AUTO_INCREMENT PRIMARY KEY,
         student_id INT NOT NULL,
@@ -144,7 +140,7 @@ const createTables = async (): Promise<void> => {
     `);
 
     // Back payments table (for tracking unpaid charges from previous grades)
-    await connection.execute(`
+    await pool.execute(`
       CREATE TABLE IF NOT EXISTS back_payments (
         id INT AUTO_INCREMENT PRIMARY KEY,
         student_id INT NOT NULL,
@@ -165,26 +161,26 @@ const createTables = async (): Promise<void> => {
     console.log('Database tables created successfully');
     
     // Create initial admin user if it doesn't exist
-    await createInitialAdminUser(connection);
+    await createInitialAdminUser();
   } catch (error) {
     console.error('Error creating tables:', error);
     throw error;
   }
 };
 
-const createInitialAdminUser = async (connection: any) => {
+const createInitialAdminUser = async () => {
   try {
     // Check if admin user already exists
-    const [rows] = await connection.execute(
+    const [rows] = await pool.execute(
       'SELECT COUNT(*) as count FROM users WHERE username = ?',
       ['admin']
     );
     
-    if (rows[0].count === 0) {
+    if ((rows as any[])[0].count === 0) {
       const bcrypt = require('bcryptjs');
       const hashedPassword = await bcrypt.hash('admin123', 12);
       
-      await connection.execute(
+      await pool.execute(
         'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
         ['admin', 'admin@school.com', hashedPassword, 'admin']
       );
