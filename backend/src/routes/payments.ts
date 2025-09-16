@@ -165,10 +165,10 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
       return next(createError('Total amount must be greater than 0', 400));
     }
 
-    const connection = getConnection();
+    const pool = getConnection();
     
     // Check if student exists
-    const [students] = await connection.execute(
+    const [students] = await pool.execute(
       'SELECT id FROM students WHERE id = ?',
       [student_id]
     );
@@ -177,7 +177,8 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
       return next(createError('Student not found', 404));
     }
 
-    // Start transaction
+    // Get connection and start transaction
+    const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
@@ -256,6 +257,7 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
       }
 
       await connection.commit();
+      connection.release();
 
       res.status(201).json({
         success: true,
@@ -264,6 +266,7 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
       });
     } catch (error) {
       await connection.rollback();
+      connection.release();
       throw error;
     }
   } catch (error) {
@@ -346,9 +349,10 @@ router.get('/student/:student_id', async (req: AuthRequest, res: Response, next:
 router.delete('/:id', requireRole(['admin']), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const connection = getConnection();
+    const pool = getConnection();
     
-    // Start transaction
+    // Get connection and start transaction
+    const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
@@ -403,6 +407,7 @@ router.delete('/:id', requireRole(['admin']), async (req: AuthRequest, res: Resp
       }
 
       await connection.commit();
+      connection.release();
 
       res.json({
         success: true,
@@ -410,6 +415,7 @@ router.delete('/:id', requireRole(['admin']), async (req: AuthRequest, res: Resp
       });
     } catch (error) {
       await connection.rollback();
+      connection.release();
       throw error;
     }
   } catch (error) {
