@@ -79,16 +79,14 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     message: 'School System API is running',
-    version: '1.0.1'
+    version: '1.0.2'
   });
-});
-
-// Error handling middleware
+});// Error handling middleware
 app.use(errorHandler);
 
 // Initialize database and start server
