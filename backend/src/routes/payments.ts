@@ -8,6 +8,24 @@ const router = Router();
 // Apply authentication to all routes
 router.use(authenticateToken);
 
+// Helper function to generate invoice number
+async function generateInvoiceNumber(connection: any): Promise<string> {
+  const currentYear = new Date().getFullYear();
+  
+  // Get the next sequence number for this year
+  const [result] = await connection.execute(
+    `SELECT COALESCE(MAX(CAST(SUBSTRING(invoice_number, 6) AS UNSIGNED)), 0) + 1 as next_number
+     FROM payments 
+     WHERE invoice_number LIKE ?`,
+    [`${currentYear}-%`]
+  );
+  
+  const nextNumber = (result as any[])[0].next_number;
+  
+  // Format: YYYY-NNNNNN (year + 6-digit sequential number)
+  return `${currentYear}-${nextNumber.toString().padStart(6, '0')}`;
+}
+
 // Get all payments
 router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -15,7 +33,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     const connection = getConnection();
     
     let query = `
-      SELECT p.*, s.first_name, s.last_name, s.student_number, u.username as created_by_username
+      SELECT p.*, s.first_name, s.last_name, s.student_number, s.middle_name, u.username as created_by_username
       FROM payments p
       JOIN students s ON p.student_id = s.id
       JOIN users u ON p.created_by = u.id
@@ -103,7 +121,7 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
     const connection = getConnection();
     
     const [payments] = await connection.execute(
-      `SELECT p.*, s.first_name, s.last_name, s.student_number, u.username as created_by_username
+      `SELECT p.*, s.first_name, s.last_name, s.middle_name, s.student_number, u.username as created_by_username
        FROM payments p
        JOIN students s ON p.student_id = s.id
        JOIN users u ON p.created_by = u.id
@@ -182,12 +200,15 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
     await connection.beginTransaction();
 
     try {
+      // Generate invoice number
+      const invoiceNumber = await generateInvoiceNumber(connection);
+      
       // Insert payment
       const [paymentResult] = await connection.execute(
         `INSERT INTO payments 
-         (student_id, payment_date, total_amount, payment_method, reference_number, notes, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [student_id, payment_date, total_amount, payment_method, reference_number || null, notes || null, req.user!.id]
+         (invoice_number, student_id, payment_date, total_amount, payment_method, reference_number, notes, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [invoiceNumber, student_id, payment_date, total_amount, payment_method, reference_number || null, notes || null, req.user!.id]
       );
 
       const paymentId = (paymentResult as any).insertId;

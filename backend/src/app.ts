@@ -8,6 +8,7 @@ import authRoutes from './routes/auth';
 import studentRoutes from './routes/students';
 import paymentRoutes from './routes/payments';
 import chargeRoutes from './routes/charges';
+import migrationRoutes from './routes/migration';
 import { errorHandler } from './middleware/errorHandler';
 import { connectDatabase } from './config/database';
 
@@ -61,6 +62,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/charges', chargeRoutes);
+app.use('/api/migration', migrationRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

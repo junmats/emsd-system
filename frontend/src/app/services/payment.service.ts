@@ -23,8 +23,10 @@ export interface Payment {
   notes?: string;
   created_by: number;
   created_at: string;
+  invoice_number?: string;
   first_name?: string;
   last_name?: string;
+  middle_name?: string;
   student_number?: string;
   created_by_username?: string;
   items?: PaymentItem[];

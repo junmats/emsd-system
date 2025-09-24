@@ -411,4 +411,249 @@ export class PaymentsComponent implements OnInit {
       }, 300);
     }
   }
+
+  printInvoice(payment: Payment) {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=600,height=800');
+    if (!printWindow) {
+      this.showToast('Error: Unable to open print window', 'error');
+      return;
+    }
+
+    // Generate invoice HTML
+    const invoiceHtml = this.generateInvoiceHtml(payment);
+    
+    printWindow.document.write(invoiceHtml);
+    printWindow.document.close();
+    
+    // Print after the content loads
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+  }
+
+  private generateInvoiceHtml(payment: Payment): string {
+    const studentName = `${payment.first_name || ''} ${payment.middle_name ? payment.middle_name + ' ' : ''}${payment.last_name || ''}`.trim();
+    const paymentDate = new Date(payment.payment_date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Payment Invoice ${payment.invoice_number || payment.id}</title>
+        <style>
+          @page {
+            size: A5;
+            margin: 0.5in;
+          }
+          
+          body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+          }
+          
+          .invoice-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+          }
+          
+          .header {
+            text-align: center;
+            border-bottom: 2px solid #2c5aa0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+          }
+          
+          .school-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c5aa0;
+            margin: 0;
+          }
+          
+          .school-address {
+            font-size: 10px;
+            color: #666;
+            margin: 2px 0;
+          }
+          
+          .invoice-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0 5px 0;
+            color: #2c5aa0;
+          }
+          
+          .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 11px;
+          }
+          
+          .student-info {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+          }
+          
+          .student-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 13px;
+            color: #2c5aa0;
+          }
+          
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+          }
+          
+          .payment-details {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+          }
+          
+          .payment-header {
+            background: #2c5aa0;
+            color: white;
+            padding: 8px;
+            font-weight: bold;
+            font-size: 12px;
+          }
+          
+          .payment-body {
+            padding: 10px;
+          }
+          
+          .payment-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px dotted #ddd;
+          }
+          
+          .payment-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            margin-top: 5px;
+            padding-top: 8px;
+            border-top: 1px solid #2c5aa0;
+          }
+          
+          .amount {
+            font-weight: bold;
+            color: #28a745;
+          }
+          
+          .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+          }
+          
+          .print-only {
+            display: block;
+          }
+          
+          @media print {
+            body {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-container">
+          <div class="header">
+            <h1 class="school-name">Eager Minds School</h1>
+            <div class="school-address">123 Education Street, Knowledge City, Philippines</div>
+            <div class="school-address">Phone: (02) 123-4567 | Email: info@eagerminds.edu.ph</div>
+            <div class="invoice-title">PAYMENT RECEIPT</div>
+          </div>
+
+          <div class="invoice-info">
+            <div>
+              <strong>Invoice #:</strong> ${payment.invoice_number || 'N/A'}<br>
+              <strong>Date:</strong> ${paymentDate}
+            </div>
+            <div>
+              <strong>Payment Method:</strong> ${payment.payment_method?.toUpperCase() || 'N/A'}<br>
+              ${payment.reference_number ? `<strong>Reference:</strong> ${payment.reference_number}` : ''}
+            </div>
+          </div>
+
+          <div class="student-info">
+            <h4>Student Information</h4>
+            <div class="info-row">
+              <span><strong>Name:</strong> ${studentName}</span>
+              <span><strong>Student #:</strong> ${payment.student_number || 'N/A'}</span>
+            </div>
+          </div>
+
+          <div class="payment-details">
+            <div class="payment-header">
+              Payment Details
+            </div>
+            <div class="payment-body">
+              ${payment.items && payment.items.length > 0 ? 
+                payment.items.map(item => `
+                  <div class="payment-row">
+                    <span>${item.description}</span>
+                    <span class="amount">₱${this.formatCurrencyValue(item.amount)}</span>
+                  </div>
+                `).join('') : 
+                `<div class="payment-row">
+                  <span>Payment Received</span>
+                  <span class="amount">₱${this.formatCurrencyValue(payment.total_amount)}</span>
+                </div>`
+              }
+              <div class="payment-row">
+                <span><strong>TOTAL AMOUNT PAID</strong></span>
+                <span class="amount"><strong>₱${this.formatCurrencyValue(payment.total_amount)}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          ${payment.notes ? `
+            <div style="margin-bottom: 15px;">
+              <strong>Notes:</strong> ${payment.notes}
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            <div>Processed by: ${payment.created_by_username || 'System'}</div>
+            <div>Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+            <div style="margin-top: 8px; font-style: italic;">Thank you for your payment!</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private formatCurrencyValue(amount: number): string {
+    return new Intl.NumberFormat('en-PH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
 }
