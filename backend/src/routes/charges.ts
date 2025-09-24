@@ -273,6 +273,7 @@ router.get('/students/summary', async (req: AuthRequest, res: Response, next: Ne
         s.student_number,
         s.first_name,
         s.last_name,
+        s.middle_name,
         s.grade_level,
         s.status,
         COALESCE(charges_summary.mandatory_charges, 0) as mandatory_charges,
