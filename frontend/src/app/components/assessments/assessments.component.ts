@@ -144,8 +144,8 @@ export class AssessmentsComponent implements OnInit {
   }
 
   createAssessment(student: Student, charges: ChargeBreakdown[], payments: PaymentRecord[]) {
-    const totalCharges = charges.reduce((sum, charge) => sum + charge.amount, 0);
-    const totalPaid = payments.reduce((sum, payment) => sum + payment.total_amount, 0);
+    const totalCharges = charges.reduce((sum, charge) => sum + parseFloat(charge.amount.toString()), 0);
+    const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.total_amount.toString()), 0);
     const totalPayable = totalCharges - totalPaid;
 
     this.assessment = {
@@ -213,215 +213,166 @@ export class AssessmentsComponent implements OnInit {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Monthly Assessment - ${studentName}</title>
+        <title>Statement of Account - ${studentName}</title>
         <style>
           body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            line-height: 1.4;
+            margin: 15px;
+            line-height: 1.3;
+            font-size: 11px;
           }
           .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
           }
           .school-name {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
+            margin-bottom: 2px;
+          }
+          .school-address {
+            font-size: 10px;
+            color: #666;
             margin-bottom: 5px;
           }
-          .assessment-title {
-            font-size: 18px;
-            color: #666;
+          .statement-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
           }
           .student-info {
-            margin-bottom: 25px;
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-          }
-          .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 15px;
+            font-size: 10px;
+          }
+          .student-left, .student-right {
+            flex: 1;
+          }
+          .info-line {
+            margin-bottom: 3px;
           }
           .info-label {
             font-weight: bold;
-            width: 150px;
-          }
-          .charges-section, .payments-section, .summary-section {
-            margin-bottom: 25px;
-          }
-          .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
+            display: inline-block;
+            width: 80px;
           }
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: 10px;
           }
           th, td {
-            padding: 8px 12px;
+            padding: 4px 6px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid #ddd;
           }
           th {
-            background-color: #f8f9fa;
+            background-color: #f0f0f0;
             font-weight: bold;
+            font-size: 9px;
           }
           .amount {
             text-align: right;
             font-family: monospace;
-          }
-          .summary-table {
-            width: 100%;
-            max-width: 400px;
-            margin-left: auto;
-          }
-          .summary-table th,
-          .summary-table td {
-            padding: 10px 15px;
+            white-space: nowrap;
           }
           .total-row {
             font-weight: bold;
-            font-size: 16px;
-            border-top: 2px solid #333;
+            background-color: #f8f9fa;
           }
           .current-due {
             background-color: #fff3cd;
             border: 2px solid #ffc107;
-            padding: 15px;
-            border-radius: 5px;
+            padding: 8px;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 10px;
           }
           .current-due-amount {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             color: #856404;
           }
           .dates {
-            margin-top: 30px;
+            margin-top: 15px;
             text-align: right;
-            font-size: 12px;
+            font-size: 9px;
             color: #666;
           }
           @media print {
-            body { margin: 0; }
+            body { margin: 5px; }
             .no-print { display: none; }
           }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="school-name">East Mindanao School District</div>
-          <div class="assessment-title">Monthly Assessment Statement</div>
+          <div class="school-name">Eager Minds School Of Dalaguete</div>
+          <div class="school-address">Poblacion, Dalaguete, Cebu 6022</div>
+          <div class="statement-title">Statement of Account</div>
         </div>
 
         <div class="student-info">
-          <div class="info-row">
-            <span class="info-label">Student Name:</span>
-            <span>${studentName}</span>
+          <div class="student-left">
+            <div class="info-line"><span class="info-label">Student:</span> ${studentName}</div>
+            <div class="info-line"><span class="info-label">Number:</span> ${student.student_number}</div>
+            <div class="info-line"><span class="info-label">Grade:</span> ${student.grade_level}</div>
           </div>
-          <div class="info-row">
-            <span class="info-label">Student Number:</span>
-            <span>${student.student_number}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Grade Level:</span>
-            <span>Grade ${student.grade_level}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Assessment Date:</span>
-            <span>${new Date(this.assessment.assessmentDate).toLocaleDateString()}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Due Date:</span>
-            <span>${new Date(this.assessment.dueDate).toLocaleDateString()}</span>
+          <div class="student-right">
+            <div class="info-line"><span class="info-label">Date:</span> ${new Date(this.assessment.assessmentDate).toLocaleDateString()}</div>
+            <div class="info-line"><span class="info-label">Due Date:</span> ${new Date(this.assessment.dueDate).toLocaleDateString()}</div>
           </div>
         </div>
 
-        <div class="charges-section">
-          <div class="section-title">Charge Breakdown</div>
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Type</th>
-                <th>Mandatory</th>
-                <th class="amount">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${this.assessment.charges.map(charge => `
-                <tr>
-                  <td>${charge.name}${charge.description ? ` - ${charge.description}` : ''}</td>
-                  <td>${this.formatChargeType(charge.charge_type)}</td>
-                  <td>${charge.is_mandatory ? 'Yes' : 'No'}</td>
-                  <td class="amount">₱${charge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="payments-section">
-          <div class="section-title">Payment History</div>
-          ${this.assessment.payments.length > 0 ? `
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Notes</th>
-                  <th class="amount">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${this.assessment.payments.map(payment => `
-                  <tr>
-                    <td>${new Date(payment.payment_date).toLocaleDateString()}</td>
-                    <td>${payment.notes || '-'}</td>
-                    <td class="amount">₱${payment.total_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          ` : `
-            <p style="text-align: center; color: #666; font-style: italic;">No payments recorded</p>
-          `}
-        </div>
-
-        <div class="summary-section">
-          <div class="section-title">Assessment Summary</div>
-          <table class="summary-table">
+        <table>
+          <thead>
             <tr>
-              <th>Total Charges:</th>
-              <td class="amount">₱${this.assessment.totalCharges.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+              <th style="width: 40%">Charge Description</th>
+              <th style="width: 15%" class="amount">Amount</th>
+              <th style="width: 15%" class="amount">Payments</th>
+              <th style="width: 15%" class="amount">Balance</th>
+              <th style="width: 15%" class="amount">Amount Due</th>
             </tr>
-            <tr>
-              <th>Total Paid:</th>
-              <td class="amount">₱${this.assessment.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-            </tr>
+          </thead>
+          <tbody>
+            ${this.assessment.charges.map(charge => {
+              const chargeAmount = parseFloat(charge.amount.toString());
+              const chargePayments = this.assessment!.payments
+                .filter(p => p.notes && p.notes.toLowerCase().includes(charge.name.toLowerCase()))
+                .reduce((sum, p) => sum + parseFloat(p.total_amount.toString()), 0);
+              const balance = chargeAmount - chargePayments;
+              const amountDue = balance > 0 ? balance : 0;
+              
+              return `
+                <tr>
+                  <td>${charge.name} ${charge.is_mandatory ? '(Required)' : '(Optional)'}</td>
+                  <td class="amount">₱${chargeAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  <td class="amount">₱${chargePayments.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  <td class="amount">₱${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  <td class="amount">₱${amountDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                </tr>
+              `;
+            }).join('')}
             <tr class="total-row">
-              <th>Total Payable:</th>
-              <td class="amount">₱${this.assessment.totalPayable.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+              <td><strong>TOTALS:</strong></td>
+              <td class="amount"><strong>₱${this.assessment.totalCharges.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
+              <td class="amount"><strong>₱${this.assessment.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
+              <td class="amount"><strong>₱${this.assessment.totalPayable.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
+              <td class="amount"><strong>₱${this.assessment.totalPayable.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong></td>
             </tr>
-          </table>
-        </div>
+          </tbody>
+        </table>
 
         <div class="current-due">
-          <div style="margin-bottom: 10px; font-weight: bold;">CURRENT AMOUNT DUE</div>
+          <div style="margin-bottom: 5px; font-weight: bold; font-size: 12px;">CURRENT AMOUNT DUE</div>
           <div class="current-due-amount">₱${this.assessment.currentDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
         </div>
 
         <div class="dates">
-          <div>Generated on: ${new Date().toLocaleString()}</div>
+          <div>Generated: ${new Date().toLocaleString()}</div>
         </div>
       </body>
       </html>
