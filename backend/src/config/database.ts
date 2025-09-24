@@ -59,6 +59,7 @@ const createTables = async (): Promise<void> => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         student_number VARCHAR(20) UNIQUE NOT NULL,
         first_name VARCHAR(50) NOT NULL,
+        middle_name VARCHAR(50),
         last_name VARCHAR(50) NOT NULL,
         grade_level INT NOT NULL CHECK (grade_level >= 1 AND grade_level <= 6),
         date_of_birth DATE,
@@ -160,23 +161,48 @@ const createTables = async (): Promise<void> => {
 
     console.log('Database tables created successfully');
     
-    // Create initial admin user if it doesn't exist
+    // Run migrations
+    await runMigrations();
+    
+    // Create initial admin user
     await createInitialAdminUser();
   } catch (error) {
-    console.error('Error creating tables:', error);
+    console.error('Error creating database tables:', error);
     throw error;
   }
 };
 
-const createInitialAdminUser = async () => {
+const runMigrations = async (): Promise<void> => {
+  try {
+    // Check if middle_name column exists in students table
+    const [columns] = await pool.execute(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'students' AND COLUMN_NAME = 'middle_name'
+    `, [process.env.DB_NAME || 'emsd_system']);
+
+    if (!Array.isArray(columns) || columns.length === 0) {
+      // Add middle_name column if it doesn't exist
+      await pool.execute(`
+        ALTER TABLE students 
+        ADD COLUMN middle_name VARCHAR(50) AFTER first_name
+      `);
+      console.log('Migration: Added middle_name column to students table');
+    }
+  } catch (error) {
+    console.error('Error running migrations:', error);
+  }
+};
+
+const createInitialAdminUser = async (): Promise<void> => {
   try {
     // Check if admin user already exists
-    const [rows] = await pool.execute(
-      'SELECT COUNT(*) as count FROM users WHERE username = ?',
-      ['admin']
+    const [existingUsers] = await pool.execute(
+      'SELECT id FROM users WHERE username = ? OR email = ?',
+      ['admin', 'admin@school.com']
     );
     
-    if ((rows as any[])[0].count === 0) {
+    if (!Array.isArray(existingUsers) || existingUsers.length === 0) {
       const bcrypt = require('bcryptjs');
       const hashedPassword = await bcrypt.hash('admin123', 12);
       

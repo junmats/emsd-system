@@ -8,6 +8,7 @@ export interface Student {
   id: number;
   student_number: string;
   first_name: string;
+  middle_name?: string;
   last_name: string;
   grade_level: number;
   date_of_birth?: string;

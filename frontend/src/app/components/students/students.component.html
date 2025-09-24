@@ -283,6 +283,14 @@
               </div>
             </div>
             <div class="col-md-4 mb-3">
+              <label for="middleName" class="form-label">Middle Name</label>
+              <input type="text" 
+                     class="form-control" 
+                     id="middleName" 
+                     [(ngModel)]="formStudent.middle_name" 
+                     name="middleName">
+            </div>
+            <div class="col-md-4 mb-3">
               <label for="lastName" class="form-label">Last Name *</label>
               <input type="text" 
                      class="form-control" 
@@ -424,6 +432,14 @@
               </div>
             </div>
             <div class="col-md-4 mb-3">
+              <label for="editMiddleName" class="form-label">Middle Name</label>
+              <input type="text" 
+                     class="form-control" 
+                     id="editMiddleName" 
+                     [(ngModel)]="formStudent.middle_name" 
+                     name="editMiddleName">
+            </div>
+            <div class="col-md-4 mb-3">
               <label for="editLastName" class="form-label">Last Name *</label>
               <input type="text" 
                      class="form-control" 
@@ -522,7 +538,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          Student Details: {{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}
+          Student Details: {{ getStudentFullName(selectedStudent!) }}
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
       </div>

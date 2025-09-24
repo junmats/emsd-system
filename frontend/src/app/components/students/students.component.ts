@@ -162,7 +162,8 @@ export class StudentsComponent implements OnInit {
   }
 
   getStudentFullName(student: Student): string {
-    return `${student.first_name} ${student.last_name}`;
+    const middleName = student.middle_name ? ` ${student.middle_name}` : '';
+    return `${student.first_name}${middleName} ${student.last_name}`;
   }
 
   getGradeLevelText(gradeLevel: number): string {
@@ -183,7 +184,8 @@ export class StudentsComponent implements OnInit {
     const today = new Date().toISOString().split('T')[0];
     this.formStudent = {
       enrollment_date: today,
-      status: 'active'
+      status: 'active',
+      middle_name: ''
     };
     this.formErrors = {}; // Clear validation errors
     this.showAddModal = true;
@@ -215,6 +217,7 @@ export class StudentsComponent implements OnInit {
     this.formStudent = {
       student_number: student.student_number,
       first_name: student.first_name,
+      middle_name: student.middle_name || '',
       last_name: student.last_name,
       grade_level: student.grade_level,
       date_of_birth: this.formatDateForInput(student.date_of_birth),

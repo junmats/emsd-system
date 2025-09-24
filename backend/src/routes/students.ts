@@ -84,6 +84,7 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
     const {
       student_number,
       first_name,
+      middle_name,
       last_name,
       grade_level,
       date_of_birth,
@@ -116,12 +117,13 @@ router.post('/', requireRole(['admin', 'staff']), async (req: AuthRequest, res: 
 
     const [result] = await connection.execute(
       `INSERT INTO students 
-       (student_number, first_name, last_name, grade_level, date_of_birth, 
+       (student_number, first_name, middle_name, last_name, grade_level, date_of_birth, 
         address, parent_name, parent_contact, parent_email, enrollment_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         student_number, 
         first_name, 
+        middle_name || null,
         last_name, 
         grade_level, 
         date_of_birth || null,
@@ -150,6 +152,7 @@ router.put('/:id', requireRole(['admin', 'staff']), async (req: AuthRequest, res
     const {
       student_number,
       first_name,
+      middle_name,
       last_name,
       grade_level,
       date_of_birth,
@@ -190,6 +193,10 @@ router.put('/:id', requireRole(['admin', 'staff']), async (req: AuthRequest, res
     if (first_name) {
       updates.push('first_name = ?');
       values.push(first_name);
+    }
+    if (middle_name !== undefined) {
+      updates.push('middle_name = ?');
+      values.push(middle_name || null);
     }
     if (last_name) {
       updates.push('last_name = ?');
