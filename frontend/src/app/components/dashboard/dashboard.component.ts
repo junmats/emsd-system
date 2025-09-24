@@ -58,7 +58,9 @@ export class DashboardComponent implements OnInit {
     // Load total payments
     this.paymentService.getPayments().subscribe({
       next: (response) => {
-        this.stats.totalPayments = response.data.reduce((total: number, payment: any) => total + payment.total_amount, 0);
+        this.stats.totalPayments = response.data.reduce((total: number, payment: any) => {
+          return total + parseFloat(payment.total_amount || 0);
+        }, 0);
       },
       error: (error) => console.error('Error loading payments:', error)
     });
@@ -68,7 +70,7 @@ export class DashboardComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.stats.outstandingBalance = response.data.reduce((total: number, student: any) => {
-            return total + student.remaining_balance;
+            return total + parseFloat(student.remaining_balance || 0);
           }, 0);
         }
       },
@@ -111,7 +113,7 @@ export class DashboardComponent implements OnInit {
             student_name: payment.first_name && payment.last_name 
               ? `${payment.first_name}${payment.middle_name ? ' ' + payment.middle_name : ''} ${payment.last_name}`
               : 'Unknown Student',
-            amount: payment.total_amount || 0,
+            amount: parseFloat(payment.total_amount || 0),
             status: 'completed' // All recorded payments are completed
           }));
       },
