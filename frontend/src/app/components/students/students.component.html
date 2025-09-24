@@ -256,7 +256,7 @@
       <div class="modal-body">
         <form>
           <div class="row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
               <label for="studentNumber" class="form-label">Student Number *</label>
               <input type="text" 
                      class="form-control" 
@@ -269,6 +269,8 @@
                 {{ formErrors['student_number'] }}
               </div>
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-4 mb-3">
               <label for="firstName" class="form-label">First Name *</label>
               <input type="text" 
@@ -398,14 +400,14 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          Edit Student: {{ selectedStudent?.first_name }} {{ selectedStudent?.last_name }}
+          Edit Student: {{ getStudentFullName(selectedStudent!) }}
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
       </div>
       <div class="modal-body">
         <form>
           <div class="row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
               <label for="editStudentNumber" class="form-label">Student Number *</label>
               <input type="text" 
                      class="form-control" 
@@ -418,6 +420,8 @@
                 {{ formErrors['student_number'] }}
               </div>
             </div>
+          </div>
+          <div class="row">
             <div class="col-md-4 mb-3">
               <label for="editFirstName" class="form-label">First Name *</label>
               <input type="text" 
