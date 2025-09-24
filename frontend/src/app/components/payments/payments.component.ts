@@ -37,7 +37,8 @@ export class PaymentsComponent implements OnInit {
     payment_method: 'cash' as 'cash' | 'card' | 'bank_transfer' | 'check',
     reference_number: '',
     notes: '',
-    items: [] as PaymentItem[]
+    items: [] as PaymentItem[],
+    printInvoiceAfterPayment: true
   };
   
   // Payment methods
@@ -275,7 +276,8 @@ export class PaymentsComponent implements OnInit {
       payment_method: 'cash',
       reference_number: '',
       notes: '',
-      items: []
+      items: [],
+      printInvoiceAfterPayment: true
     };
   }
 
@@ -302,6 +304,24 @@ export class PaymentsComponent implements OnInit {
       
       if (response?.success) {
         this.showToast('Payment processed successfully', 'success');
+        
+        // Print invoice if requested
+        if (this.paymentForm.printInvoiceAfterPayment && response.paymentId) {
+          try {
+            // Get the created payment details for printing
+            const paymentDetails = await this.paymentService.getPayment(response.paymentId).toPromise();
+            if (paymentDetails?.success) {
+              // Add a small delay to ensure the payment is fully processed
+              setTimeout(() => {
+                this.printInvoice(paymentDetails.data);
+              }, 500);
+            }
+          } catch (printError) {
+            console.error('Error printing invoice:', printError);
+            this.showToast('Payment processed successfully, but could not print invoice', 'warning');
+          }
+        }
+        
         this.resetPaymentForm();
         this.clearSelectedStudent();
         this.loadPayments(); // Refresh payment history
@@ -459,8 +479,8 @@ export class PaymentsComponent implements OnInit {
             line-height: 1.3;
             color: #333;
             margin: 0;
-            padding: 15px;
-            max-width: 4in;
+            padding: 20px;
+            width: 100%;
           }
           
           .header {
@@ -518,7 +538,7 @@ export class PaymentsComponent implements OnInit {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
-            font-size: 12px;
+            font-size: 14px;
           }
           
           th, td {
@@ -535,7 +555,7 @@ export class PaymentsComponent implements OnInit {
           
           .amount-col {
             text-align: right;
-            width: 25%;
+            width: 30%;
           }
           
           .total-row {

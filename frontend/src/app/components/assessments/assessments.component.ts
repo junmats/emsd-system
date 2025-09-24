@@ -126,6 +126,8 @@ export class AssessmentsComponent implements OnInit {
         // Load student's payment history
         this.paymentService.getStudentPaymentHistory(student.id, 1, 100).subscribe({
           next: (paymentResponse: any) => {
+            console.log('Payment Response:', paymentResponse);
+            console.log('Payments Data:', paymentResponse.data.payments);
             this.createAssessment(student, chargeResponse.data.charges, paymentResponse.data.payments);
             this.isLoading = false;
           },
@@ -144,8 +146,19 @@ export class AssessmentsComponent implements OnInit {
   }
 
   createAssessment(student: Student, charges: ChargeBreakdown[], payments: PaymentRecord[]) {
+    console.log('createAssessment called with:');
+    console.log('charges:', charges);
+    console.log('payments:', payments);
+    
     const totalCharges = charges.reduce((sum, charge) => sum + parseFloat(charge.amount.toString()), 0);
-    const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.total_amount.toString()), 0);
+    console.log('totalCharges:', totalCharges);
+    
+    const totalPaid = payments.reduce((sum, payment) => {
+      console.log('processing payment:', payment, 'amount:', payment.total_amount, 'parsed:', parseFloat(payment.total_amount.toString()));
+      return sum + parseFloat(payment.total_amount.toString());
+    }, 0);
+    console.log('totalPaid:', totalPaid);
+    
     const totalPayable = totalCharges - totalPaid;
 
     this.assessment = {
