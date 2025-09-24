@@ -45,6 +45,7 @@ export class AppComponent {
     if (url.includes('/students')) return 'Student Management';
     if (url.includes('/payments')) return 'Payment Management';
     if (url.includes('/charges')) return 'Charge Management';
+    if (url.includes('/assessments')) return 'Monthly Assessments';
 
     return 'School System';
   }

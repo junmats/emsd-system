@@ -1,0 +1,345 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+          <i class="fas fa-file-invoice-dollar me-2"></i>
+          Monthly Assessments
+        </h2>
+        <button class="btn btn-outline-secondary" (click)="resetAssessment()" *ngIf="selectedStudent">
+          <i class="fas fa-arrow-left me-2"></i>
+          Back to Student List
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Selection -->
+  <div class="row" *ngIf="!selectedStudent">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Select Student</h5>
+        </div>
+        <div class="card-body">
+          <!-- Search and Filter Controls -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="fas fa-search"></i>
+                </span>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  placeholder="Search by name or student number..."
+                  [(ngModel)]="searchTerm">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" [(ngModel)]="selectedGrade">
+                <option [value]="null">All Grades</option>
+                <option *ngFor="let grade of grades" [value]="grade">Grade {{ grade }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <div class="text-muted">
+                {{ filteredStudents.length }} of {{ students.length }} students
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading Indicator -->
+          <div class="text-center py-4" *ngIf="isLoading">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">Loading students...</div>
+          </div>
+
+          <!-- Students Table -->
+          <div class="table-responsive" *ngIf="!isLoading">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Student Number</th>
+                  <th>Name</th>
+                  <th>Grade</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let student of filteredStudents" 
+                    style="cursor: pointer;" 
+                    (click)="selectStudent(student)">
+                  <td>{{ student.student_number }}</td>
+                  <td>{{ getStudentFullName(student) }}</td>
+                  <td>
+                    <span class="badge bg-primary">Grade {{ student.grade_level }}</span>
+                  </td>
+                  <td>
+                    <span class="badge" 
+                          [class]="student.status === 'active' ? 'bg-success' : 'bg-secondary'">
+                      {{ student.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-primary" (click)="selectStudent(student); $event.stopPropagation()">
+                      <i class="fas fa-file-invoice me-1"></i>
+                      Generate Assessment
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="text-center py-4" *ngIf="filteredStudents.length === 0 && !isLoading">
+              <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No students found matching your criteria</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assessment Form and Preview -->
+  <div class="row" *ngIf="selectedStudent && !assessment">
+    <div class="col-12">
+      <div class="text-center py-4">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2">Loading assessment data...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="assessment">
+    <div class="col-md-4">
+      <div class="card sticky-top" style="top: 20px;">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Assessment Settings</h5>
+        </div>
+        <div class="card-body">
+          <!-- Student Info -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Student:</label>
+            <div>{{ getStudentFullName(assessment.student) }}</div>
+            <small class="text-muted">{{ assessment.student.student_number }} - Grade {{ assessment.student.grade_level }}</small>
+          </div>
+
+          <!-- Assessment Date -->
+          <div class="mb-3">
+            <label for="assessmentDate" class="form-label">Assessment Date</label>
+            <input 
+              type="date" 
+              id="assessmentDate"
+              class="form-control" 
+              [(ngModel)]="assessmentDate"
+              (ngModelChange)="updateAssessmentDate()">
+          </div>
+
+          <!-- Due Date -->
+          <div class="mb-3">
+            <label for="dueDate" class="form-label">Payment Due Date</label>
+            <input 
+              type="date" 
+              id="dueDate"
+              class="form-control" 
+              [(ngModel)]="dueDate"
+              (ngModelChange)="updateDueDate()">
+          </div>
+
+          <!-- Current Due Amount -->
+          <div class="mb-4">
+            <label for="currentDue" class="form-label">Current Amount Due</label>
+            <div class="input-group">
+              <span class="input-group-text">₱</span>
+              <input 
+                type="number" 
+                id="currentDue"
+                class="form-control" 
+                [(ngModel)]="currentDue"
+                (ngModelChange)="updateCurrentDue()"
+                min="0"
+                step="0.01"
+                placeholder="0.00">
+            </div>
+            <small class="form-text text-muted">
+              This amount will be prominently displayed as the current due amount
+            </small>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary btn-lg" (click)="printAssessment()">
+              <i class="fas fa-print me-2"></i>
+              Print Assessment
+            </button>
+            <button class="btn btn-outline-secondary" (click)="resetAssessment()">
+              <i class="fas fa-times me-2"></i>
+              Cancel
+            </button>
+          </div>
+
+          <!-- Summary Box -->
+          <div class="mt-4 p-3 bg-light rounded">
+            <h6 class="fw-bold mb-2">Quick Summary</h6>
+            <div class="d-flex justify-content-between">
+              <span>Total Charges:</span>
+              <span class="fw-bold">₱{{ assessment.totalCharges.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>Total Paid:</span>
+              <span class="fw-bold text-success">₱{{ assessment.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+            <div class="d-flex justify-content-between border-top pt-2 mt-2">
+              <span>Total Payable:</span>
+              <span class="fw-bold text-danger">₱{{ assessment.totalPayable.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Assessment Preview</h5>
+        </div>
+        <div class="card-body">
+          <!-- Assessment Header -->
+          <div class="text-center mb-4 pb-3 border-bottom">
+            <h3 class="fw-bold mb-1">East Mindanao School District</h3>
+            <h5 class="text-muted">Monthly Assessment Statement</h5>
+          </div>
+
+          <!-- Student Information -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="mb-2">
+                <strong>Student Name:</strong> {{ getStudentFullName(assessment.student) }}
+              </div>
+              <div class="mb-2">
+                <strong>Student Number:</strong> {{ assessment.student.student_number }}
+              </div>
+              <div class="mb-2">
+                <strong>Grade Level:</strong> Grade {{ assessment.student.grade_level }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-2">
+                <strong>Assessment Date:</strong> {{ assessmentDate | date:'mediumDate' }}
+              </div>
+              <div class="mb-2">
+                <strong>Due Date:</strong> {{ dueDate | date:'mediumDate' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Charge Breakdown -->
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3">Charge Breakdown</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Description</th>
+                    <th>Type</th>
+                    <th>Mandatory</th>
+                    <th class="text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let charge of assessment.charges">
+                    <td>
+                      {{ charge.name }}
+                      <small class="text-muted d-block" *ngIf="charge.description">{{ charge.description }}</small>
+                    </td>
+                    <td>
+                      <span class="badge" 
+                            [class]="'bg-' + (charge.charge_type === 'tuition' ? 'primary' : 
+                                              charge.charge_type === 'books' ? 'success' : 
+                                              charge.charge_type === 'uniform' ? 'info' : 
+                                              charge.charge_type === 'activities' ? 'warning' : 'secondary')">
+                        {{ formatChargeType(charge.charge_type) }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [class]="charge.is_mandatory ? 'bg-danger' : 'bg-secondary'">
+                        {{ charge.is_mandatory ? 'Yes' : 'No' }}
+                      </span>
+                    </td>
+                    <td class="text-end">₱{{ charge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Payment History -->
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3">Payment History</h6>
+            <div *ngIf="assessment.payments.length > 0; else noPayments">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Date</th>
+                      <th>Notes</th>
+                      <th class="text-end">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let payment of assessment.payments">
+                      <td>{{ payment.payment_date | date:'shortDate' }}</td>
+                      <td>{{ payment.notes || '-' }}</td>
+                      <td class="text-end">₱{{ payment.total_amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <ng-template #noPayments>
+              <div class="text-center py-3 text-muted">
+                <i class="fas fa-receipt fa-2x mb-2"></i>
+                <p class="mb-0">No payments recorded</p>
+              </div>
+            </ng-template>
+          </div>
+
+          <!-- Assessment Summary -->
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3">Assessment Summary</h6>
+            <div class="row">
+              <div class="col-md-6 offset-md-6">
+                <table class="table table-sm">
+                  <tr>
+                    <th>Total Charges:</th>
+                    <td class="text-end">₱{{ assessment.totalCharges.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                  </tr>
+                  <tr>
+                    <th>Total Paid:</th>
+                    <td class="text-end text-success">₱{{ assessment.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                  </tr>
+                  <tr class="table-dark">
+                    <th>Total Payable:</th>
+                    <td class="text-end fw-bold">₱{{ assessment.totalPayable.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Due -->
+          <div class="alert alert-warning text-center">
+            <h5 class="alert-heading fw-bold">CURRENT AMOUNT DUE</h5>
+            <h2 class="display-4 fw-bold text-dark">₱{{ currentDue.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -4,6 +4,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { StudentsComponent } from './components/students/students.component';
 import { PaymentsComponent } from './components/payments/payments.component';
 import { ChargesComponent } from './components/charges/charges.component';
+import { AssessmentsComponent } from './components/assessments/assessments.component';
 import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -27,6 +28,11 @@ export const routes: Routes = [
   { 
     path: 'charges', 
     component: ChargesComponent, 
+    canActivate: [AuthGuard] 
+  },
+  { 
+    path: 'assessments', 
+    component: AssessmentsComponent, 
     canActivate: [AuthGuard] 
   },
   { path: '**', redirectTo: '/login' }
