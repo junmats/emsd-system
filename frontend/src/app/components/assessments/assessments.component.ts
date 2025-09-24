@@ -30,6 +30,19 @@ interface PaymentRecord {
   total_amount: number;
   payment_date: string;
   notes: string;
+  items?: PaymentItem[];
+}
+
+interface PaymentItem {
+  id: number;
+  payment_id: number;
+  charge_id: number | null;
+  description: string;
+  amount: number | string;
+  is_manual_charge: number;
+  created_at: string;
+  charge_name?: string;
+  charge_type?: string;
 }
 
 interface Assessment {
@@ -126,8 +139,6 @@ export class AssessmentsComponent implements OnInit {
         // Load student's payment history
         this.paymentService.getStudentPaymentHistory(student.id, 1, 100).subscribe({
           next: (paymentResponse: any) => {
-            console.log('Payment Response:', paymentResponse);
-            console.log('Payments Data:', paymentResponse.data.payments);
             this.createAssessment(student, chargeResponse.data.charges, paymentResponse.data.payments);
             this.isLoading = false;
           },
@@ -146,19 +157,8 @@ export class AssessmentsComponent implements OnInit {
   }
 
   createAssessment(student: Student, charges: ChargeBreakdown[], payments: PaymentRecord[]) {
-    console.log('createAssessment called with:');
-    console.log('charges:', charges);
-    console.log('payments:', payments);
-    
     const totalCharges = charges.reduce((sum, charge) => sum + parseFloat(charge.amount.toString()), 0);
-    console.log('totalCharges:', totalCharges);
-    
-    const totalPaid = payments.reduce((sum, payment) => {
-      console.log('processing payment:', payment, 'amount:', payment.total_amount, 'parsed:', parseFloat(payment.total_amount.toString()));
-      return sum + parseFloat(payment.total_amount.toString());
-    }, 0);
-    console.log('totalPaid:', totalPaid);
-    
+    const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.total_amount.toString()), 0);
     const totalPayable = totalCharges - totalPaid;
 
     this.assessment = {
@@ -195,6 +195,25 @@ export class AssessmentsComponent implements OnInit {
   getStudentFullName(student: Student): string {
     const middle = student.middle_name ? ` ${student.middle_name}` : '';
     return `${student.first_name}${middle} ${student.last_name}`;
+  }
+
+  getPaymentAmountForCharge(chargeId: number): number {
+    if (!this.assessment?.payments) return 0;
+    
+    let totalPaidForCharge = 0;
+    
+    // Go through all payments and their items
+    this.assessment.payments.forEach(payment => {
+      if (payment.items) {
+        payment.items.forEach((item: any) => {
+          if (item.charge_id === chargeId) {
+            totalPaidForCharge += parseFloat(item.amount.toString());
+          }
+        });
+      }
+    });
+    
+    return totalPaidForCharge;
   }
 
   printAssessment() {

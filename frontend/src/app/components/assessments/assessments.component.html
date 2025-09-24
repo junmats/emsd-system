@@ -248,9 +248,9 @@
                       </span>
                     </td>
                     <td class="text-end">₱{{ charge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
-                    <td class="text-end">₱0.00</td>
-                    <td class="text-end">₱{{ charge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
-                    <td class="text-end">₱{{ charge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                    <td class="text-end">₱{{ getPaymentAmountForCharge(charge.id).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                    <td class="text-end">₱{{ (charge.amount - getPaymentAmountForCharge(charge.id)).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
+                    <td class="text-end">₱{{ (charge.amount - getPaymentAmountForCharge(charge.id)).toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</td>
                   </tr>
                   <tr class="table-dark">
                     <td><strong>TOTALS:</strong></td>
