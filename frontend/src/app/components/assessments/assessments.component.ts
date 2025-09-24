@@ -161,6 +161,9 @@ export class AssessmentsComponent implements OnInit {
     const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.total_amount.toString()), 0);
     const totalPayable = totalCharges - totalPaid;
 
+    // Set currentDue to calculated value (can be overridden by user input)
+    this.currentDue = totalPayable;
+
     this.assessment = {
       student,
       charges,
@@ -177,6 +180,13 @@ export class AssessmentsComponent implements OnInit {
   updateCurrentDue() {
     if (this.assessment) {
       this.assessment.currentDue = this.currentDue;
+    }
+  }
+
+  resetToCalculatedAmount() {
+    if (this.assessment) {
+      this.currentDue = this.calculatedCurrentDue;
+      this.updateCurrentDue();
     }
   }
 
@@ -214,6 +224,11 @@ export class AssessmentsComponent implements OnInit {
     });
     
     return totalPaidForCharge;
+  }
+
+  get calculatedCurrentDue(): number {
+    if (!this.assessment) return 0;
+    return this.assessment.totalPayable;
   }
 
   printAssessment() {
