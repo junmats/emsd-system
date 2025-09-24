@@ -36,7 +36,7 @@
               <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                 Total Payments
               </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">${{ stats.totalPayments | number:'1.2-2' }}</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">₱{{ stats.totalPayments | number:'1.2-2' }}</div>
             </div>
             <div class="col-auto">
               <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -54,7 +54,7 @@
               <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                 Outstanding Balance
               </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">${{ stats.outstandingBalance | number:'1.2-2' }}</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">₱{{ stats.outstandingBalance | number:'1.2-2' }}</div>
             </div>
             <div class="col-auto">
               <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
@@ -105,14 +105,14 @@
               <tbody>
                 <tr *ngFor="let student of recentStudents">
                   <td>{{ student.student_number }}</td>
-                  <td>{{ student.first_name }} {{ student.last_name }}</td>
+                  <td>{{ student.first_name }}{{ student.middle_name ? ' ' + student.middle_name : '' }} {{ student.last_name }}</td>
                   <td>{{ student.grade_level }}</td>
                   <td>
                     <span class="badge" 
                           [ngClass]="{
-                            'badge-success': student.status === 'active',
-                            'badge-warning': student.status === 'inactive',
-                            'badge-info': student.status === 'graduated'
+                            'bg-success': student.status === 'active',
+                            'bg-warning': student.status === 'inactive',
+                            'bg-info': student.status === 'graduated'
                           }">
                       {{ student.status }}
                     </span>
@@ -152,13 +152,13 @@
                 <tr *ngFor="let payment of recentPayments">
                   <td>{{ payment.payment_date | date:'short' }}</td>
                   <td>{{ payment.student_name }}</td>
-                  <td>${{ payment.amount | number:'1.2-2' }}</td>
+                  <td>₱{{ payment.amount | number:'1.2-2' }}</td>
                   <td>
                     <span class="badge" 
                           [ngClass]="{
-                            'badge-success': payment.status === 'completed',
-                            'badge-warning': payment.status === 'pending',
-                            'badge-danger': payment.status === 'failed'
+                            'bg-success': payment.status === 'completed',
+                            'bg-warning': payment.status === 'pending',
+                            'bg-danger': payment.status === 'failed'
                           }">
                       {{ payment.status }}
                     </span>

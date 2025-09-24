@@ -58,11 +58,24 @@ export class DashboardComponent implements OnInit {
     // Load total payments
     this.paymentService.getPayments().subscribe({
       next: (response) => {
-        this.stats.totalPayments = response.data.reduce((total: number, payment: any) => total + payment.amount, 0);
-        // For now, set outstanding balance to 0 - this would need more complex calculation
-        this.stats.outstandingBalance = 0;
+        this.stats.totalPayments = response.data.reduce((total: number, payment: any) => total + payment.total_amount, 0);
       },
       error: (error) => console.error('Error loading payments:', error)
+    });
+
+    // Load outstanding balance (simplified calculation for now)
+    this.chargeService.getStudentChargesSummary().subscribe({
+      next: (response: any) => {
+        if (response.success) {
+          this.stats.outstandingBalance = response.data.reduce((total: number, student: any) => {
+            return total + student.remaining_balance;
+          }, 0);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading outstanding balance:', error);
+        this.stats.outstandingBalance = 0;
+      }
     });
 
     // Load active charges
@@ -89,13 +102,17 @@ export class DashboardComponent implements OnInit {
   loadRecentPayments() {
     this.paymentService.getPayments().subscribe({
       next: (response) => {
-        // Get the 5 most recent payments and add student names
+        // Get the 5 most recent payments with proper student names
         this.recentPayments = response.data
           .sort((a: any, b: any) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
           .slice(0, 5)
           .map((payment: any) => ({
             ...payment,
-            student_name: payment.student_name || 'Unknown Student'
+            student_name: payment.first_name && payment.last_name 
+              ? `${payment.first_name}${payment.middle_name ? ' ' + payment.middle_name : ''} ${payment.last_name}`
+              : 'Unknown Student',
+            amount: payment.total_amount || 0,
+            status: 'completed' // All recorded payments are completed
           }));
       },
       error: (error) => console.error('Error loading recent payments:', error)
