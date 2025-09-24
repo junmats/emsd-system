@@ -62,7 +62,7 @@ export class AssessmentsComponent implements OnInit {
   searchTerm = '';
   
   // Filters
-  selectedGrade: number | null = null;
+  selectedGrade: number | string = '';
   grades = [1, 2, 3, 4, 5, 6];
 
   constructor(
@@ -106,7 +106,7 @@ export class AssessmentsComponent implements OnInit {
           .toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         student.student_number.toLowerCase().includes(this.searchTerm.toLowerCase());
       
-      const matchesGrade = !this.selectedGrade || student.grade_level === this.selectedGrade;
+      const matchesGrade = !this.selectedGrade || this.selectedGrade === '' || student.grade_level === Number(this.selectedGrade);
       
       return matchesSearch && matchesGrade;
     });
@@ -379,7 +379,7 @@ export class AssessmentsComponent implements OnInit {
     `;
   }
 
-  formatChargeType(type: string): string {
+  public formatChargeType(type: string): string {
     return type.charAt(0).toUpperCase() + type.slice(1);
   }
 

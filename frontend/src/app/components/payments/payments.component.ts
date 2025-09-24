@@ -446,127 +446,110 @@ export class PaymentsComponent implements OnInit {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Payment Invoice ${payment.invoice_number || payment.id}</title>
+        <title>Payment Receipt ${payment.invoice_number || payment.id}</title>
         <style>
           @page {
-            size: A5;
+            size: A4;
             margin: 0.5in;
           }
           
           body {
             font-family: 'Arial', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 14px;
+            line-height: 1.3;
             color: #333;
             margin: 0;
-            padding: 0;
-          }
-          
-          .invoice-container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 10px;
+            padding: 15px;
+            max-width: 4in;
           }
           
           .header {
             text-align: center;
-            border-bottom: 2px solid #2c5aa0;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
             margin-bottom: 15px;
           }
           
           .school-name {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            color: #2c5aa0;
+            color: #000;
             margin: 0;
+            line-height: 1.2;
           }
           
           .school-address {
-            font-size: 10px;
-            color: #666;
-            margin: 2px 0;
+            font-size: 12px;
+            color: #333;
+            margin: 4px 0;
+            line-height: 1.2;
           }
           
-          .invoice-title {
-            font-size: 16px;
+          .statement-title {
+            font-size: 14px;
             font-weight: bold;
-            margin: 10px 0 5px 0;
-            color: #2c5aa0;
-          }
-          
-          .invoice-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 11px;
+            margin: 8px 0 0 0;
+            color: #000;
           }
           
           .student-info {
-            background: #f8f9fa;
-            padding: 8px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-          }
-          
-          .student-info h4 {
-            margin: 0 0 5px 0;
-            font-size: 13px;
-            color: #2c5aa0;
-          }
-          
-          .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 3px;
-          }
-          
-          .payment-details {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            overflow: hidden;
             margin-bottom: 15px;
-          }
-          
-          .payment-header {
-            background: #2c5aa0;
-            color: white;
-            padding: 8px;
-            font-weight: bold;
             font-size: 12px;
           }
           
-          .payment-body {
-            padding: 10px;
+          .student-left, .student-right {
+            flex: 1;
           }
           
-          .payment-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px dotted #ddd;
+          .info-line {
+            margin-bottom: 3px;
+            line-height: 1.3;
           }
           
-          .payment-row:last-child {
-            border-bottom: none;
+          .info-label {
             font-weight: bold;
-            margin-top: 5px;
-            padding-top: 8px;
-            border-top: 1px solid #2c5aa0;
+            display: inline-block;
+            min-width: 70px;
           }
           
-          .amount {
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 12px;
+          }
+          
+          th, td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            text-align: left;
+          }
+          
+          th {
+            background-color: #f0f0f0;
             font-weight: bold;
-            color: #28a745;
+            text-align: center;
+          }
+          
+          .amount-col {
+            text-align: right;
+            width: 25%;
+          }
+          
+          .total-row {
+            font-weight: bold;
+            background-color: #f5f5f5;
           }
           
           .footer {
             text-align: center;
             font-size: 10px;
             color: #666;
-            margin-top: 20px;
+            margin-top: 15px;
             padding-top: 10px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #000;
           }
           
           .print-only {
@@ -582,68 +565,62 @@ export class PaymentsComponent implements OnInit {
         </style>
       </head>
       <body>
-        <div class="invoice-container">
-          <div class="header">
-            <h1 class="school-name">Eager Minds School</h1>
-            <div class="school-address">123 Education Street, Knowledge City, Philippines</div>
-            <div class="school-address">Phone: (02) 123-4567 | Email: info@eagerminds.edu.ph</div>
-            <div class="invoice-title">PAYMENT RECEIPT</div>
-          </div>
+        <div class="header">
+          <div class="school-name">Eager Minds School Of Dalaguete</div>
+          <div class="school-address">Poblacion, Dalaguete, Cebu 6022</div>
+          <div class="statement-title">PAYMENT RECEIPT</div>
+        </div>
 
-          <div class="invoice-info">
-            <div>
-              <strong>Invoice #:</strong> ${payment.invoice_number || 'N/A'}<br>
-              <strong>Date:</strong> ${paymentDate}
-            </div>
-            <div>
-              <strong>Payment Method:</strong> ${payment.payment_method?.toUpperCase() || 'N/A'}<br>
-              ${payment.reference_number ? `<strong>Reference:</strong> ${payment.reference_number}` : ''}
-            </div>
+        <div class="student-info">
+          <div class="student-left">
+            <div class="info-line"><span class="info-label">Student:</span> ${studentName}</div>
+            <div class="info-line"><span class="info-label">Number:</span> ${payment.student_number || 'N/A'}</div>
+            <div class="info-line"><span class="info-label">Invoice #:</span> ${payment.invoice_number || 'N/A'}</div>
           </div>
-
-          <div class="student-info">
-            <h4>Student Information</h4>
-            <div class="info-row">
-              <span><strong>Name:</strong> ${studentName}</span>
-              <span><strong>Student #:</strong> ${payment.student_number || 'N/A'}</span>
-            </div>
+          <div class="student-right">
+            <div class="info-line"><span class="info-label">Date:</span> ${paymentDate}</div>
+            <div class="info-line"><span class="info-label">Method:</span> ${payment.payment_method?.toUpperCase() || 'N/A'}</div>
+            ${payment.reference_number ? `<div class="info-line"><span class="info-label">Reference:</span> ${payment.reference_number}</div>` : ''}
           </div>
+        </div>
 
-          <div class="payment-details">
-            <div class="payment-header">
-              Payment Details
-            </div>
-            <div class="payment-body">
-              ${payment.items && payment.items.length > 0 ? 
-                payment.items.map(item => `
-                  <div class="payment-row">
-                    <span>${item.description}</span>
-                    <span class="amount">₱${this.formatCurrencyValue(item.amount)}</span>
-                  </div>
-                `).join('') : 
-                `<div class="payment-row">
-                  <span>Payment Received</span>
-                  <span class="amount">₱${this.formatCurrencyValue(payment.total_amount)}</span>
-                </div>`
-              }
-              <div class="payment-row">
-                <span><strong>TOTAL AMOUNT PAID</strong></span>
-                <span class="amount"><strong>₱${this.formatCurrencyValue(payment.total_amount)}</strong></span>
-              </div>
-            </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th class="amount-col">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${payment.items && payment.items.length > 0 ? 
+              payment.items.map(item => `
+                <tr>
+                  <td>${item.description}</td>
+                  <td class="amount-col">₱${this.formatCurrencyValue(item.amount)}</td>
+                </tr>
+              `).join('') : 
+              `<tr>
+                <td>Payment Received</td>
+                <td class="amount-col">₱${this.formatCurrencyValue(payment.total_amount)}</td>
+              </tr>`
+            }
+            <tr class="total-row">
+              <td><strong>TOTAL AMOUNT PAID</strong></td>
+              <td class="amount-col"><strong>₱${this.formatCurrencyValue(payment.total_amount)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        ${payment.notes ? `
+          <div style="margin-bottom: 15px; font-size: 12px;">
+            <strong>Notes:</strong> ${payment.notes}
           </div>
+        ` : ''}
 
-          ${payment.notes ? `
-            <div style="margin-bottom: 15px;">
-              <strong>Notes:</strong> ${payment.notes}
-            </div>
-          ` : ''}
-
-          <div class="footer">
-            <div>Processed by: ${payment.created_by_username || 'System'}</div>
-            <div>Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-            <div style="margin-top: 8px; font-style: italic;">Thank you for your payment!</div>
-          </div>
+        <div class="footer">
+          <div>Processed by: ${payment.created_by_username || 'System'}</div>
+          <div>Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+          <div style="margin-top: 5px; font-style: italic;">Thank you for your payment!</div>
         </div>
       </body>
       </html>
