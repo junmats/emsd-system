@@ -433,8 +433,8 @@ export class PaymentsComponent implements OnInit {
   }
 
   printInvoice(payment: Payment) {
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank', 'width=600,height=800');
+    // Create a new window for printing with adequate width
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
     if (!printWindow) {
       this.showToast('Error: Unable to open print window', 'error');
       return;
@@ -470,7 +470,7 @@ export class PaymentsComponent implements OnInit {
         <style>
           @page {
             size: A4;
-            margin: 0.5in;
+            margin: 0.75in;
           }
           
           body {
@@ -479,8 +479,10 @@ export class PaymentsComponent implements OnInit {
             line-height: 1.3;
             color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
           }
           
           .header {
@@ -539,12 +541,14 @@ export class PaymentsComponent implements OnInit {
             border-collapse: collapse;
             margin-bottom: 15px;
             font-size: 14px;
+            table-layout: fixed;
           }
           
           th, td {
             border: 1px solid #000;
-            padding: 6px 8px;
+            padding: 6px 12px;
             text-align: left;
+            word-wrap: break-word;
           }
           
           th {
@@ -555,7 +559,10 @@ export class PaymentsComponent implements OnInit {
           
           .amount-col {
             text-align: right;
-            width: 30%;
+            width: 35%;
+            min-width: 120px;
+            white-space: nowrap;
+            padding-right: 12px;
           }
           
           .total-row {
@@ -580,6 +587,22 @@ export class PaymentsComponent implements OnInit {
             body {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            
+            @page {
+              margin: 0.75in;
+              size: A4;
+            }
+            
+            table {
+              page-break-inside: avoid;
+            }
+            
+            .amount-col {
+              width: 35% !important;
+              min-width: 120px !important;
             }
           }
         </style>
