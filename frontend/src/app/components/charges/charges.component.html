@@ -149,7 +149,7 @@
                             [class.bg-success]="charge.charge_type === 'books'"
                             [class.bg-warning]="charge.charge_type === 'uniform'"
                             [class.bg-dark]="charge.charge_type === 'activities'"
-                            [class.bg-secondary]="charge.charge_type === 'other'">
+                            [class.bg-info]="charge.charge_type === 'other'">>
                         {{ getChargeTypeLabel(charge.charge_type) }}
                       </span>
                     </td>
@@ -728,7 +728,7 @@
                             [class.bg-success]="charge.charge_type === 'books'"
                             [class.bg-warning]="charge.charge_type === 'uniform'"
                             [class.bg-dark]="charge.charge_type === 'activities'"
-                            [class.bg-secondary]="charge.charge_type === 'other'">
+                            [class.bg-info]="charge.charge_type === 'other'">
                         {{ getChargeTypeLabel(charge.charge_type) }}
                       </span>
                     </td>
