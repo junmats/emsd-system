@@ -5,6 +5,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { StudentService } from '../../services/student.service';
 import { ChargeService } from '../../services/charge.service';
 import { PaymentService } from '../../services/payment.service';
+import { AssessmentFlagsService, AssessmentFlag } from '../../services/assessment-flags.service';
 
 interface Student {
   id: number;
@@ -79,6 +80,10 @@ export class AssessmentsComponent implements OnInit {
   selectedStudents: Student[] = [];
   batchAssessments: Assessment[] = [];
   
+  // Assessment flags
+  assessmentFlags: AssessmentFlag[] = [];
+  flaggedStudentIds: Set<number> = new Set();
+  
   // Filters
   selectedGrade: number | string = '';
   grades = [1, 2, 3, 4, 5, 6];
@@ -86,7 +91,8 @@ export class AssessmentsComponent implements OnInit {
   constructor(
     private studentService: StudentService,
     private chargeService: ChargeService,
-    private paymentService: PaymentService
+    private paymentService: PaymentService,
+    private assessmentFlagsService: AssessmentFlagsService
   ) {
     // Set default dates
     const today = new Date();
@@ -99,6 +105,7 @@ export class AssessmentsComponent implements OnInit {
 
   ngOnInit() {
     this.loadStudents();
+    this.loadAssessmentFlags();
   }
 
   loadStudents() {
@@ -231,6 +238,25 @@ export class AssessmentsComponent implements OnInit {
     return totalPaidForCharge;
   }
 
+  getBatchPaymentAmountForCharge(assessment: Assessment, chargeId: number): number {
+    if (!assessment?.payments) return 0;
+    
+    let totalPaidForCharge = 0;
+    
+    // Go through all payments and their items
+    assessment.payments.forEach(payment => {
+      if (payment.items) {
+        payment.items.forEach((item: any) => {
+          if (item.charge_id === chargeId) {
+            totalPaidForCharge += parseFloat(item.amount.toString());
+          }
+        });
+      }
+    });
+    
+    return totalPaidForCharge;
+  }
+
   get calculatedCurrentDue(): number {
     if (!this.assessment) return 0;
     return this.assessment.totalPayable;
@@ -239,20 +265,8 @@ export class AssessmentsComponent implements OnInit {
   printAssessment() {
     if (!this.assessment) return;
     
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (!printWindow) return;
-
     const printContent = this.generatePrintHTML();
-    
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    
-    // Wait for content to load then print
-    printWindow.onload = () => {
-      printWindow.print();
-      printWindow.close();
-    };
+    this.silentPrint(printContent);
   }
 
   private generatePrintHTML(): string {
@@ -457,6 +471,11 @@ export class AssessmentsComponent implements OnInit {
     }
   }
 
+  onAssessmentDateChange() {
+    // Reload flags when assessment date changes
+    this.loadAssessmentFlags();
+  }
+
   toggleStudentSelection(student: Student) {
     const index = this.selectedStudents.findIndex(s => s.id === student.id);
     if (index > -1) {
@@ -588,11 +607,116 @@ export class AssessmentsComponent implements OnInit {
     if (this.batchAssessments.length === 0) return;
 
     const printContent = this.generateBatchPrintHTML();
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.print();
+    this.silentPrint(printContent);
+    
+    // Show confirmation dialog after printing
+    setTimeout(() => {
+      this.showFlagConfirmationDialog();
+    }, 1000);
+  }
+
+  private silentPrint(content: string) {
+    // Create a hidden iframe for printing
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.top = '-10000px';
+    iframe.style.left = '-10000px';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    
+    document.body.appendChild(iframe);
+    
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(content);
+      doc.close();
+      
+      // Wait for content to load, then print
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        
+        // Remove iframe after printing
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 500);
+    }
+  }
+
+  private showFlagConfirmationDialog() {
+    const studentNames = this.selectedStudents.map(s => this.getStudentFullName(s)).join(', ');
+    const message = `Would you like to mark these students as "Assessment Generated" for ${new Date(this.assessmentDate).toLocaleDateString()}?\n\nStudents: ${studentNames}\n\nThis will help track which students have already had their assessments printed.`;
+    
+    if (confirm(message)) {
+      this.flagSelectedStudents();
+    }
+  }
+
+  private async flagSelectedStudents() {
+    if (this.selectedStudents.length === 0) return;
+
+    try {
+      const studentIds = this.selectedStudents.map(s => s.id);
+      const response = await this.assessmentFlagsService.setAssessmentFlags(studentIds, this.assessmentDate).toPromise();
+      
+      if (response?.success) {
+        // Reload flags to update UI
+        await this.loadAssessmentFlags();
+        
+        // Show success message
+        alert(`Successfully marked ${studentIds.length} students as "Assessment Generated"`);
+        
+        // Optionally clear selection
+        this.clearBatchSelection();
+      } else {
+        alert('Failed to set assessment flags');
+      }
+    } catch (error) {
+      console.error('Error setting assessment flags:', error);
+      alert('Error setting assessment flags');
+    }
+  }
+
+  loadAssessmentFlags() {
+    this.assessmentFlagsService.getAssessmentFlags(this.assessmentDate).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.assessmentFlags = response.data;
+          this.flaggedStudentIds = new Set(response.data.map(flag => flag.student_id));
+        } else {
+          console.error('Failed to load assessment flags');
+        }
+      },
+      error: (error) => {
+        console.error('Error loading assessment flags:', error);
+      }
+    });
+  }
+
+  isStudentFlagged(student: Student): boolean {
+    return this.flaggedStudentIds.has(student.id);
+  }
+
+  async clearAllAssessmentFlags() {
+    const message = `Are you sure you want to clear ALL assessment flags?\n\nThis will remove the "Assessment Generated" status from all students for all dates.\n\nThis action is typically done at the start of a new assessment period.`;
+    
+    if (!confirm(message)) return;
+
+    try {
+      const response = await this.assessmentFlagsService.clearAllAssessmentFlags().toPromise();
+      
+      if (response?.success) {
+        // Reload flags to update UI
+        await this.loadAssessmentFlags();
+        alert(`Successfully cleared ${response.data.deleted_count} assessment flags`);
+      } else {
+        alert('Failed to clear assessment flags');
+      }
+    } catch (error) {
+      console.error('Error clearing assessment flags:', error);
+      alert('Error clearing assessment flags');
     }
   }
 
@@ -656,14 +780,24 @@ export class AssessmentsComponent implements OnInit {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 8px;
-            font-size: 9px;
+            font-size: 8px;
           }
           
           .charges-table th,
           .charges-table td {
             border: 1px solid #333;
-            padding: 2px 4px;
+            padding: 1px 3px;
             text-align: left;
+          }
+          
+          .charges-table th:first-child,
+          .charges-table td:first-child {
+            width: 40%;
+          }
+          
+          .charges-table th:not(:first-child),
+          .charges-table td:not(:first-child) {
+            width: 20%;
           }
           
           .charges-table th {
@@ -756,15 +890,23 @@ export class AssessmentsComponent implements OnInit {
             <tr>
               <th>Description</th>
               <th>Amount</th>
+              <th>Paid</th>
+              <th>Balance</th>
             </tr>
           </thead>
           <tbody>
-            ${assessment.charges.map(charge => `
+            ${assessment.charges.map(charge => {
+              const paidAmount = this.getBatchPaymentAmountForCharge(assessment, charge.id);
+              const balance = charge.amount - paidAmount;
+              return `
               <tr>
                 <td>${charge.name}</td>
                 <td class="amount">₱${charge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td class="amount">₱${paidAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td class="amount">₱${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>
-            `).join('')}
+              `;
+            }).join('')}
           </tbody>
         </table>
 
