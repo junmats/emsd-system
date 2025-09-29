@@ -3,17 +3,17 @@ const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     
-    // Local development - temporarily use production API
+    // Local development - use local backend
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'https://emsd-system-production.up.railway.app/api';
+      return 'http://localhost:3000/api';
     }
     
     // Production (Vercel domain or custom domain)
     return 'https://emsd-system-production.up.railway.app/api';
   }
   
-  // Server-side rendering fallback - use production API
-  return 'https://emsd-system-production.up.railway.app/api';
+  // Server-side rendering fallback - use local for development
+  return 'http://localhost:3000/api';
 };
 
 export const environment = {

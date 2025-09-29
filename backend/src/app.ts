@@ -66,6 +66,37 @@ app.use('/api/charges', chargeRoutes);
 app.use('/api/migration', migrationRoutes);
 app.use('/api/assessment-flags', assessmentFlagsRoutes);
 
+// Temporary test endpoint for assessment flags (no auth required)
+app.get('/api/test-assessment-flags/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    const connection = require('./config/database').getConnection();
+    
+    const [flags] = await connection.execute(`
+      SELECT 
+        af.student_id,
+        af.assessment_date,
+        af.flagged_at
+      FROM assessment_flags af
+      WHERE af.assessment_date = ?
+    `, [date]);
+
+    res.json({
+      success: true,
+      data: flags,
+      count: Array.isArray(flags) ? flags.length : 0,
+      message: `Test query for assessment flags on ${date}`
+    });
+  } catch (error) {
+    console.error('Error in test assessment flags:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Failed to test assessment flags'
+    });
+  }
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
@@ -90,6 +121,37 @@ app.get('/api/health', (req, res) => {
     message: 'School System API is running',
     version: '1.0.2'
   });
+});
+
+// Test endpoint to check if assessment_flags table exists
+app.get('/api/test-flags-table', async (req, res) => {
+  try {
+    const connection = require('./config/database').getConnection();
+    
+    // Check if table exists
+    const [tables] = await connection.execute(
+      "SHOW TABLES LIKE 'assessment_flags'"
+    );
+    
+    // Count rows in table
+    const [count] = await connection.execute(
+      'SELECT COUNT(*) as count FROM assessment_flags'
+    );
+    
+    res.json({
+      success: true,
+      table_exists: Array.isArray(tables) && tables.length > 0,
+      row_count: count[0]?.count || 0,
+      message: 'Assessment flags table test completed'
+    });
+  } catch (error) {
+    console.error('Error testing assessment flags table:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Failed to test assessment flags table'
+    });
+  }
 });// Error handling middleware
 app.use(errorHandler);
 

@@ -47,11 +47,15 @@ export class AssessmentFlagsService {
 
   // Get assessment flags for a specific date
   getAssessmentFlags(assessmentDate: string): Observable<AssessmentFlagsResponse> {
-    return this.http.get<AssessmentFlagsResponse>(`${this.apiUrl}/flags/${assessmentDate}`);
+    console.log(`AssessmentFlagsService: Getting flags for date ${assessmentDate}`);
+    const url = `${this.apiUrl}/flags/${assessmentDate}`;
+    console.log(`AssessmentFlagsService: API URL = ${url}`);
+    return this.http.get<AssessmentFlagsResponse>(url);
   }
 
   // Set assessment flags for multiple students
   setAssessmentFlags(studentIds: number[], assessmentDate: string): Observable<AssessmentFlagResponse> {
+    console.log(`AssessmentFlagsService: Setting flags for ${studentIds.length} students on ${assessmentDate}`, studentIds);
     return this.http.post<AssessmentFlagResponse>(`${this.apiUrl}/flags`, {
       student_ids: studentIds,
       assessment_date: assessmentDate

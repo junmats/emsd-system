@@ -26,6 +26,8 @@ router.get('/flags/:assessmentDate', authenticateToken, async (req: AuthRequest,
       ORDER BY s.grade_level, s.last_name, s.first_name
     `, [assessmentDate]);
 
+    console.log(`Assessment flags query: Found ${Array.isArray(flags) ? flags.length : 0} flags for date ${assessmentDate}`);
+
     res.json({
       success: true,
       data: flags
@@ -63,17 +65,27 @@ router.post('/flags', authenticateToken, async (req: AuthRequest, res) => {
     // Insert flags for each student (ignore duplicates)
     const values = student_ids.map(studentId => [studentId, assessment_date, userId]);
     
-    await connection.execute(`
+    console.log(`Assessment flags - Attempting to insert:`, {
+      student_ids,
+      assessment_date,
+      userId,
+      values
+    });
+    
+    const [result] = await connection.execute(`
       INSERT IGNORE INTO assessment_flags (student_id, assessment_date, created_by)
       VALUES ${student_ids.map(() => '(?, ?, ?)').join(', ')}
     `, values.flat());
+
+    console.log(`Assessment flags operation: ${(result as any).affectedRows} rows inserted for ${student_ids.length} students on ${assessment_date}`);
 
     res.json({
       success: true,
       message: `Assessment flags set for ${student_ids.length} students`,
       data: {
         student_count: student_ids.length,
-        assessment_date
+        assessment_date,
+        rows_affected: (result as any).affectedRows
       }
     });
   } catch (error) {

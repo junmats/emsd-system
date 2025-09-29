@@ -58,7 +58,7 @@
                   Clear Selection
                 </button>
                 <button class="btn btn-outline-warning" 
-                        (click)="clearAllAssessmentFlags()"
+                        (click)="showClearFlagsConfirmation()"
                         title="Clear all assessment flags for new assessment period">
                   <i class="fas fa-flag me-1"></i>
                   Clear All Flags
@@ -86,8 +86,9 @@
                       <thead>
                         <tr>
                           <th style="width: 200px;">Student</th>
-                          <th style="width: 300px;">Charges Breakdown</th>
+                          <th style="width: 250px;">Charges Breakdown</th>
                           <th>Total Charges</th>
+                          <th style="width: 250px;">Payment Breakdown</th>
                           <th>Total Paid</th>
                           <th>Balance</th>
                           <th>Current Due</th>
@@ -101,20 +102,27 @@
                           </td>
                           <td>
                             <div class="small">
-                              <div *ngFor="let charge of assessment.charges" class="mb-2">
+                              <div *ngFor="let charge of assessment.charges" class="mb-1">
                                 <div class="d-flex justify-content-between">
                                   <span class="fw-medium">{{ charge.name }}:</span>
                                   <span class="fw-bold">{{ formatCurrency(charge.amount) }}</span>
-                                </div>
-                                <div class="d-flex justify-content-between text-muted">
-                                  <span class="ms-2">• Paid:</span>
-                                  <span>{{ formatCurrency(getBatchPaymentAmountForCharge(assessment, charge.id)) }}</span>
                                 </div>
                               </div>
                               <div *ngIf="assessment.charges.length === 0" class="text-muted">No charges found</div>
                             </div>
                           </td>
                           <td>{{ formatCurrency(assessment.totalCharges) }}</td>
+                          <td>
+                            <div class="small">
+                              <div *ngFor="let charge of assessment.charges" class="mb-1">
+                                <div class="d-flex justify-content-between text-success">
+                                  <span class="fw-medium">{{ charge.name }} paid:</span>
+                                  <span class="fw-bold">{{ formatCurrency(getBatchPaymentAmountForCharge(assessment, charge.id)) }}</span>
+                                </div>
+                              </div>
+                              <div *ngIf="assessment.charges.length === 0" class="text-muted">No payments found</div>
+                            </div>
+                          </td>
                           <td>{{ formatCurrency(assessment.totalPaid) }}</td>
                           <td>{{ formatCurrency(assessment.totalPayable) }}</td>
                           <td>
@@ -218,6 +226,7 @@
                   <th>Name</th>
                   <th>Grade</th>
                   <th>Status</th>
+                  <th>Generated</th>
                 </tr>
               </thead>
               <tbody>
@@ -262,6 +271,14 @@
                     <span class="badge" 
                           [class]="student.status === 'active' ? 'bg-success' : 'bg-secondary'">
                       {{ student.status }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span *ngIf="isStudentFlagged(student)" class="text-success fw-bold">
+                      <i class="fas fa-check-circle me-1"></i>Yes
+                    </span>
+                    <span *ngIf="!isStudentFlagged(student)" class="text-muted">
+                      -
                     </span>
                   </td>
                 </tr>
@@ -524,3 +541,44 @@
   </div>
 </div>
 <div class="modal-backdrop fade" [class.show]="showFlagModal" *ngIf="showFlagModal"></div>
+
+<!-- Clear Flags Confirmation Modal -->
+<div class="modal fade" [class.show]="showClearFlagsModal" [style.display]="showClearFlagsModal ? 'block' : 'none'" tabindex="-1" role="dialog" *ngIf="showClearFlagsModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+          Clear All Assessment Flags
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">
+          <strong>Are you sure you want to clear ALL assessment flags?</strong>
+        </p>
+        <p class="mb-3">
+          This will remove the "Assessment Generated" status from <strong>all students</strong> for <strong>all dates</strong>.
+        </p>
+        <p class="text-warning mb-0">
+          <i class="bi bi-info-circle me-1"></i>
+          This action is typically done at the start of a new assessment period and cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" 
+                class="btn btn-secondary" 
+                (click)="cancelClearFlags()">
+          <i class="bi bi-x-circle me-1"></i>
+          Cancel
+        </button>
+        <button type="button" 
+                class="btn btn-warning" 
+                (click)="confirmClearFlags()">
+          <i class="bi bi-trash me-1"></i>
+          Clear All Flags
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showClearFlagsModal" *ngIf="showClearFlagsModal"></div>

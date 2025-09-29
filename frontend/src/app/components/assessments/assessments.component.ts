@@ -76,7 +76,7 @@ export class AssessmentsComponent implements OnInit {
   searchTerm = '';
   
   // Batch functionality
-  currentMode: 'single' | 'batch' = 'single';
+  currentMode: 'single' | 'batch' = 'batch';
   selectedStudents: Student[] = [];
   batchAssessments: Assessment[] = [];
   
@@ -84,6 +84,7 @@ export class AssessmentsComponent implements OnInit {
   assessmentFlags: AssessmentFlag[] = [];
   flaggedStudentIds: Set<number> = new Set();
   showFlagModal = false;
+  showClearFlagsModal = false;
   
   // Filters
   selectedGrade: number | string = '';
@@ -682,16 +683,19 @@ export class AssessmentsComponent implements OnInit {
       this.clearBatchSelection();
       
       // Make API call to persist the flags
+      console.log(`AssessmentsComponent: Making API call to set flags for students:`, studentIds);
       this.assessmentFlagsService.setAssessmentFlags(studentIds, this.assessmentDate).subscribe({
         next: (response) => {
+          console.log('AssessmentsComponent: Set flags response:', response);
           if (response?.success) {
             // Reload flags to get proper data from backend (with correct IDs)
+            console.log('AssessmentsComponent: Flags set successfully, reloading flags from database');
             this.loadAssessmentFlags();
             
             console.log(`Successfully marked ${studentIds.length} students as "Assessment Generated"`);
           } else {
             // If API call fails, revert the local changes
-            console.error('Failed to set assessment flags');
+            console.error('Failed to set assessment flags:', response);
             studentIds.forEach(studentId => {
               this.flaggedStudentIds.delete(studentId);
               this.assessmentFlags = this.assessmentFlags.filter(flag => 
@@ -702,6 +706,7 @@ export class AssessmentsComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error setting assessment flags:', error);
+          console.error('Error details:', error.error);
           // If API call fails, revert the local changes
           studentIds.forEach(studentId => {
             this.flaggedStudentIds.delete(studentId);
@@ -717,17 +722,21 @@ export class AssessmentsComponent implements OnInit {
   }
 
   loadAssessmentFlags() {
+    console.log(`AssessmentsComponent: Loading flags for date ${this.assessmentDate}`);
     this.assessmentFlagsService.getAssessmentFlags(this.assessmentDate).subscribe({
       next: (response) => {
+        console.log('AssessmentsComponent: Flags response received:', response);
         if (response.success) {
           this.assessmentFlags = response.data;
           this.flaggedStudentIds = new Set(response.data.map(flag => flag.student_id));
+          console.log(`AssessmentsComponent: Loaded ${this.assessmentFlags.length} flags, flagged student IDs:`, Array.from(this.flaggedStudentIds));
         } else {
-          console.error('Failed to load assessment flags');
+          console.error('Failed to load assessment flags:', response);
         }
       },
       error: (error) => {
         console.error('Error loading assessment flags:', error);
+        console.error('Error details:', error.error);
       }
     });
   }
@@ -736,19 +745,34 @@ export class AssessmentsComponent implements OnInit {
     return this.flaggedStudentIds.has(student.id);
   }
 
-  async clearAllAssessmentFlags() {
-    const message = `Are you sure you want to clear ALL assessment flags?\n\nThis will remove the "Assessment Generated" status from all students for all dates.\n\nThis action is typically done at the start of a new assessment period.`;
-    
-    if (!confirm(message)) return;
+  showClearFlagsConfirmation() {
+    this.showClearFlagsModal = true;
+  }
 
+  confirmClearFlags() {
+    this.showClearFlagsModal = false;
+    this.clearAllAssessmentFlags();
+  }
+
+  cancelClearFlags() {
+    this.showClearFlagsModal = false;
+  }
+
+  async clearAllAssessmentFlags() {
     try {
       const response = await this.assessmentFlagsService.clearAllAssessmentFlags().toPromise();
       
       if (response?.success) {
-        // Reload flags to update UI
+        // Clear local state immediately
+        this.assessmentFlags = [];
+        this.flaggedStudentIds.clear();
+        
+        // Reload flags to ensure consistency
         await this.loadAssessmentFlags();
-        alert(`Successfully cleared ${response.data.deleted_count} assessment flags`);
+        
+        console.log(`Successfully cleared ${response.data.deleted_count} assessment flags`);
       } else {
+        console.error('Failed to clear assessment flags');
         alert('Failed to clear assessment flags');
       }
     } catch (error) {
@@ -777,23 +801,23 @@ export class AssessmentsComponent implements OnInit {
           
           body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 11px;
             margin: 0;
             padding: 10px;
           }
           
           .assessment-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
             margin-bottom: 15px;
           }
           
           .assessment-card {
             border: 2px solid #333;
-            padding: 8px;
+            padding: 10px;
             background: white;
-            min-height: 240px;
+            min-height: 280px;
             page-break-inside: avoid;
           }
           
@@ -806,37 +830,37 @@ export class AssessmentsComponent implements OnInit {
           
           .school-name {
             font-weight: bold;
-            font-size: 10px;
-            margin-bottom: 1px;
+            font-size: 11px;
+            margin-bottom: 2px;
           }
           
           .school-address {
-            font-size: 8px;
-            margin-bottom: 1px;
+            font-size: 9px;
+            margin-bottom: 2px;
             color: #666;
           }
           
           .document-title {
             font-weight: bold;
-            font-size: 9px;
+            font-size: 10px;
           }
           
           .student-info {
-            margin-bottom: 6px;
-            font-size: 8px;
+            margin-bottom: 8px;
+            font-size: 9px;
           }
           
           .charges-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6px;
-            font-size: 7px;
+            margin-bottom: 8px;
+            font-size: 8px;
           }
           
           .charges-table th,
           .charges-table td {
             border: 1px solid #333;
-            padding: 2px 3px;
+            padding: 3px 4px;
             text-align: left;
           }
           
