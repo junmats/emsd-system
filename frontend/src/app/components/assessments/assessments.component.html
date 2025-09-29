@@ -9,7 +9,7 @@
               <button class="nav-link" 
                       [class.active]="currentMode === 'batch'"
                       (click)="switchMode('batch')">
-                Batch Assessment (6 Students)
+                Batch Assessment
               </button>
             </li>
             <li class="nav-item">
@@ -19,13 +19,6 @@
                 Single Assessment
               </button>
             </li>
-            <li class="nav-item">
-              <button class="nav-link" 
-                      [class.active]="currentMode === 'saved'"
-                      (click)="switchMode('saved')">
-                Saved Assessments
-              </button>
-            </li>
           </ul>
         </div>
         <div class="card-body">
@@ -33,31 +26,24 @@
           <div *ngIf="currentMode === 'batch'">
             <!-- Batch Controls -->
             <div class="row mb-3">
-              <div class="col-md-4">
-                <label class="form-label">Batch Name</label>
-                <input type="text" 
-                       class="form-control" 
-                       [(ngModel)]="batchName"
-                       placeholder="Enter batch name (e.g., Grade 1 - October 2024)">
-              </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label class="form-label">Assessment Date</label>
                 <input type="date" 
                        class="form-control" 
                        [(ngModel)]="assessmentDate">
               </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label class="form-label">Due Date</label>
                 <input type="date" 
                        class="form-control" 
                        [(ngModel)]="dueDate">
               </div>
-              <div class="col-md-4 d-flex align-items-end">
+              <div class="col-md-6 d-flex align-items-end">
                 <button class="btn btn-primary me-2" 
                         (click)="generateBatchAssessments()"
                         [disabled]="selectedStudents.length === 0 || isLoading">
                   <i class="fas fa-calculator me-1"></i>
-                  Generate Assessments ({{ selectedStudents.length }})
+                  Generate Assessments ({{ selectedStudents.length }}/6)
                 </button>
                 <button class="btn btn-success me-2" 
                         (click)="printBatchAssessments()"
@@ -65,16 +51,10 @@
                   <i class="fas fa-print me-1"></i>
                   Print
                 </button>
-                <button class="btn btn-info me-2" 
-                        (click)="saveBatchAssessments()"
-                        [disabled]="batchAssessments.length === 0 || !batchName.trim()">
-                  <i class="fas fa-save me-1"></i>
-                  Save
-                </button>
                 <button class="btn btn-outline-secondary" 
                         (click)="clearBatchSelection()">
                   <i class="fas fa-times me-1"></i>
-                  Clear
+                  Clear Selection
                 </button>
               </div>
             </div>
@@ -91,7 +71,7 @@
             <div *ngIf="batchAssessments.length > 0" class="mb-4">
               <div class="card">
                 <div class="card-header">
-                  <h6 class="mb-0">Generated Assessments</h6>
+                  <h6 class="mb-0">Generated Assessments - Ready to Print</h6>
                 </div>
                 <div class="card-body">
                   <div class="table-responsive">
@@ -144,114 +124,21 @@
 
           <!-- Single Assessment Mode -->
           <div *ngIf="currentMode === 'single' && !selectedStudent">
-            <h5 class="card-title mb-0">Select Student</h5>
-          </div>
-
-          <!-- Saved Assessments Mode -->
-          <div *ngIf="currentMode === 'saved'">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="mb-0">Saved Assessment Batches</h5>
-              <button class="btn btn-outline-danger" 
-                      (click)="clearAllAssessments()"
-                      title="Clear all saved assessments">
-                <i class="fas fa-trash me-1"></i>
-                Clear All Assessments
-              </button>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-header">
-                    <h6 class="mb-0">Saved Batches</h6>
-                  </div>
-                  <div class="card-body">
-                    <div *ngIf="savedBatches.length === 0" class="text-center text-muted py-3">
-                      No saved assessment batches found.
-                    </div>
-                    <div class="list-group list-group-flush" *ngIf="savedBatches.length > 0">
-                      <div class="list-group-item d-flex justify-content-between align-items-center" 
-                           *ngFor="let batch of savedBatches">
-                        <div>
-                          <h6 class="mb-1">{{ batch.batch_name }}</h6>
-                          <small class="text-muted">
-                            {{ batch.assessments?.length || 0 }} students | 
-                            Created: {{ batch.created_at | date:'shortDate' }}
-                          </small>
-                        </div>
-                        <div>
-                          <button class="btn btn-sm btn-outline-primary me-1" 
-                                  (click)="loadSavedBatch(batch)">
-                            Load
-                          </button>
-                          <button class="btn btn-sm btn-outline-danger" 
-                                  (click)="deleteSavedBatch(batch)">
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="col-md-6" *ngIf="selectedBatch">
-                <div class="card">
-                  <div class="card-header">
-                    <h6 class="mb-0">{{ selectedBatch.batch_name }}</h6>
-                  </div>
-                  <div class="card-body">
-                    <div class="mb-2">
-                      <small class="text-muted">
-                        Assessment Date: {{ selectedBatch.assessment_date | date:'shortDate' }} | 
-                        Due Date: {{ selectedBatch.due_date | date:'shortDate' }}
-                      </small>
-                    </div>
-                    <div class="mb-3">
-                      <button class="btn btn-success" 
-                              (click)="printBatchAssessments()"
-                              [disabled]="batchAssessments.length === 0">
-                        <i class="fas fa-print me-1"></i>
-                        Print Batch ({{ batchAssessments.length }} students)
-                      </button>
-                    </div>
-                    <div class="table-responsive">
-                      <table class="table table-sm">
-                        <thead>
-                          <tr>
-                            <th>Student</th>
-                            <th>Current Due</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr *ngFor="let assessment of batchAssessments">
-                            <td>
-                              <strong>{{ getStudentFullName(assessment.student) }}</strong><br>
-                              <small class="text-muted">{{ assessment.student.student_number }}</small>
-                            </td>
-                            <td>{{ formatCurrency(assessment.currentDue) }}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <h5 class="card-title mb-0">Select Student for Individual Assessment</h5>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Student Selection (for both single and batch modes) -->
+  <!-- Student Selection -->
   <div class="row" *ngIf="(currentMode === 'single' && !selectedStudent) || (currentMode === 'batch')">
     <div class="col-12">
       <div class="card">
         <div class="card-header">
           <h5 class="card-title mb-0">
             <span *ngIf="currentMode === 'single'">Select Student</span>
-            <span *ngIf="currentMode === 'batch'">Select Students (Max 6)</span>
+            <span *ngIf="currentMode === 'batch'">Select Students (Max 6) - {{ selectedStudents.length }}/6 selected</span>
           </h5>
         </div>
         <div class="card-body">
@@ -293,41 +180,43 @@
             <div class="mt-2">Loading students...</div>
           </div>
 
+          <!-- Selection Limit Warning -->
+          <div class="alert alert-warning" *ngIf="currentMode === 'batch' && selectedStudents.length === 6">
+            <i class="fas fa-info-circle me-2"></i>
+            Maximum 6 students selected. Uncheck a student to select others.
+          </div>
+
           <!-- Students Table -->
           <div class="table-responsive" *ngIf="!isLoading">
             <table class="table table-hover">
               <thead class="table-light">
                 <tr>
                   <th *ngIf="currentMode === 'batch'" style="width: 50px;">
-                    <input type="checkbox" 
-                           class="form-check-input"
-                           [checked]="selectedStudents.length === filteredStudents.length && filteredStudents.length > 0"
-                           [indeterminate]="selectedStudents.length > 0 && selectedStudents.length < filteredStudents.length"
-                           (change)="onSelectAllStudents($event)"
-                           [disabled]="filteredStudents.length === 0">
+                    <i class="fas fa-check-square text-muted" title="Select students"></i>
                   </th>
                   <th>Student Number</th>
                   <th>Name</th>
                   <th>Grade</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th *ngIf="currentMode === 'single'">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let student of filteredStudents" 
-                    [class.table-active]="currentMode === 'batch' && isStudentSelected(student)"
-                    style="cursor: pointer;" 
-                    (click)="currentMode === 'single' ? selectStudent(student) : toggleStudentSelection(student)">
+                    [class.table-success]="currentMode === 'batch' && isStudentSelected(student)">
                   <td *ngIf="currentMode === 'batch'">
                     <input type="checkbox" 
-                           class="form-check-input"
+                           class="form-check-input" 
                            [checked]="isStudentSelected(student)"
-                           [disabled]="!isStudentSelected(student) && selectedStudents.length >= 6"
-                           (click)="$event.stopPropagation()"
+                           [disabled]="isCheckboxDisabled(student)"
                            (change)="toggleStudentSelection(student)">
                   </td>
                   <td>{{ student.student_number }}</td>
-                  <td>{{ getStudentFullName(student) }}</td>
+                  <td>
+                    <strong>{{ getStudentFullName(student) }}</strong>
+                    <span *ngIf="currentMode === 'batch' && isStudentSelected(student)" 
+                          class="badge bg-success ms-2">Selected</span>
+                  </td>
                   <td>
                     <span class="badge bg-primary">Grade {{ student.grade_level }}</span>
                   </td>
@@ -337,25 +226,12 @@
                       {{ student.status }}
                     </span>
                   </td>
-                  <td>
-                    <button *ngIf="currentMode === 'single'" 
-                            class="btn btn-sm btn-primary" 
-                            (click)="selectStudent(student); $event.stopPropagation()">
+                  <td *ngIf="currentMode === 'single'">
+                    <button class="btn btn-sm btn-primary" 
+                            (click)="selectStudent(student)">
                       <i class="fas fa-file-invoice me-1"></i>
                       Generate Assessment
                     </button>
-                    <span *ngIf="currentMode === 'batch' && isStudentSelected(student)" 
-                          class="badge bg-success">
-                      <i class="fas fa-check me-1"></i>Selected
-                    </span>
-                    <span *ngIf="currentMode === 'batch' && !isStudentSelected(student) && selectedStudents.length >= 6" 
-                          class="badge bg-secondary">
-                      Limit Reached
-                    </span>
-                    <span *ngIf="currentMode === 'batch' && !isStudentSelected(student) && selectedStudents.length < 6" 
-                          class="text-muted">
-                      Click to select
-                    </span>
                   </td>
                 </tr>
               </tbody>
