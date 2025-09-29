@@ -665,22 +665,50 @@ export class AssessmentsComponent implements OnInit {
     try {
       const studentIds = this.selectedStudents.map(s => s.id);
       
+      // Immediately update local state for instant visual feedback
+      studentIds.forEach(studentId => {
+        this.flaggedStudentIds.add(studentId);
+        
+        // Create temporary flag objects for immediate UI update
+        const tempFlag: AssessmentFlag = {
+          student_id: studentId,
+          assessment_date: this.assessmentDate,
+          flagged_at: new Date().toISOString()
+        };
+        this.assessmentFlags.push(tempFlag);
+      });
+      
+      // Clear selection and reset checkboxes immediately
+      this.clearBatchSelection();
+      
+      // Make API call to persist the flags
       this.assessmentFlagsService.setAssessmentFlags(studentIds, this.assessmentDate).subscribe({
         next: (response) => {
           if (response?.success) {
-            // Reload flags to update UI
+            // Reload flags to get proper data from backend (with correct IDs)
             this.loadAssessmentFlags();
-            
-            // Clear selection and reset checkboxes
-            this.clearBatchSelection();
             
             console.log(`Successfully marked ${studentIds.length} students as "Assessment Generated"`);
           } else {
+            // If API call fails, revert the local changes
             console.error('Failed to set assessment flags');
+            studentIds.forEach(studentId => {
+              this.flaggedStudentIds.delete(studentId);
+              this.assessmentFlags = this.assessmentFlags.filter(flag => 
+                !(flag.student_id === studentId && flag.assessment_date === this.assessmentDate)
+              );
+            });
           }
         },
         error: (error) => {
           console.error('Error setting assessment flags:', error);
+          // If API call fails, revert the local changes
+          studentIds.forEach(studentId => {
+            this.flaggedStudentIds.delete(studentId);
+            this.assessmentFlags = this.assessmentFlags.filter(flag => 
+              !(flag.student_id === studentId && flag.assessment_date === this.assessmentDate)
+            );
+          });
         }
       });
     } catch (error) {
@@ -739,7 +767,7 @@ export class AssessmentsComponent implements OnInit {
         <style>
           @page {
             size: A4;
-            margin: 15mm;
+            margin: 10mm;
           }
           
           @media print {
@@ -749,66 +777,66 @@ export class AssessmentsComponent implements OnInit {
           
           body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: 10px;
             margin: 0;
-            padding: 15px;
+            padding: 10px;
           }
           
           .assessment-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 25px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
           }
           
           .assessment-card {
             border: 2px solid #333;
-            padding: 15px;
+            padding: 8px;
             background: white;
-            min-height: 320px;
+            min-height: 240px;
             page-break-inside: avoid;
           }
           
           .header {
             text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
           }
           
           .school-name {
             font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 3px;
+            font-size: 10px;
+            margin-bottom: 1px;
           }
           
           .school-address {
-            font-size: 11px;
-            margin-bottom: 3px;
+            font-size: 8px;
+            margin-bottom: 1px;
             color: #666;
           }
           
           .document-title {
             font-weight: bold;
-            font-size: 13px;
+            font-size: 9px;
           }
           
           .student-info {
-            margin-bottom: 12px;
-            font-size: 11px;
+            margin-bottom: 6px;
+            font-size: 8px;
           }
           
           .charges-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 10px;
-            font-size: 10px;
+            margin-bottom: 6px;
+            font-size: 7px;
           }
           
           .charges-table th,
           .charges-table td {
             border: 1px solid #333;
-            padding: 4px 6px;
+            padding: 2px 3px;
             text-align: left;
           }
           
@@ -832,27 +860,27 @@ export class AssessmentsComponent implements OnInit {
           }
           
           .totals {
-            margin: 10px 0;
-            font-size: 11px;
+            margin: 6px 0;
+            font-size: 8px;
           }
           
           .current-due {
             text-align: center;
-            border: 2px solid #333;
-            padding: 8px;
-            margin: 10px 0;
+            border: 1px solid #333;
+            padding: 4px;
+            margin: 6px 0;
             background-color: #f9f9f9;
           }
           
           .current-due-amount {
-            font-size: 16px;
+            font-size: 10px;
             font-weight: bold;
           }
           
           .dates {
             text-align: center;
-            font-size: 10px;
-            margin-top: 8px;
+            font-size: 7px;
+            margin-top: 4px;
           }
         </style>
       </head>
