@@ -110,10 +110,6 @@
                                   <span class="ms-2">• Paid:</span>
                                   <span>{{ formatCurrency(getBatchPaymentAmountForCharge(assessment, charge.id)) }}</span>
                                 </div>
-                                <div class="d-flex justify-content-between text-muted">
-                                  <span class="ms-2">• Balance:</span>
-                                  <span>{{ formatCurrency(charge.amount - getBatchPaymentAmountForCharge(assessment, charge.id)) }}</span>
-                                </div>
                               </div>
                               <div *ngIf="assessment.charges.length === 0" class="text-muted">No charges found</div>
                             </div>
@@ -228,6 +224,7 @@
                 <tr *ngFor="let student of filteredStudents" 
                     [class.table-success]="currentMode === 'batch' && isStudentSelected(student)"
                     [class.table-warning]="currentMode === 'batch' && !isStudentSelected(student) && isCheckboxDisabled(student)"
+                    [class.table-secondary]="isStudentFlagged(student) && !isStudentSelected(student)"
                     [style.cursor]="currentMode === 'batch' ? 'pointer' : 'default'"
                     (click)="currentMode === 'batch' ? onRowClick(student) : (currentMode === 'single' ? selectStudent(student) : null)">
                   <td *ngIf="currentMode === 'batch'" (click)="$event.stopPropagation()">
@@ -253,9 +250,9 @@
                       <i class="fas fa-mouse-pointer me-1"></i>Click to select
                     </span>
                     <span *ngIf="isStudentFlagged(student)" 
-                          class="badge bg-dark ms-2"
-                          title="Assessment already generated for {{ assessmentDate }}">
-                      <i class="fas fa-flag me-1"></i>Generated
+                          class="badge bg-success ms-2"
+                          title="Assessment already generated for {{ assessmentDate | date:'mediumDate' }}">
+                      <i class="fas fa-check-circle me-1"></i>Generated
                     </span>
                   </td>
                   <td>
@@ -403,8 +400,8 @@
         <div class="card-body">
           <!-- Assessment Header -->
           <div class="text-center mb-4 pb-3 border-bottom">
-            <h3 class="fw-bold mb-1">Eager Minds School Of Dalaguete</h3>
-            <small class="text-muted d-block mb-2">Poblacion, Dalaguete, Cebu 6022</small>
+            <h3 class="fw-bold mb-1">Eager Minds School of Dalaguete</h3>
+            <small class="text-muted d-block mb-2">Poblacion, Dalaguete, Cebu</small>
             <h5 class="text-muted">Statement of Account</h5>
           </div>
 
@@ -482,3 +479,48 @@
     </div>
   </div>
 </div>
+
+<!-- Flag Confirmation Modal -->
+<div class="modal fade" [class.show]="showFlagModal" [style.display]="showFlagModal ? 'block' : 'none'" tabindex="-1" role="dialog" *ngIf="showFlagModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-flag text-success me-2"></i>
+          Mark Assessments as Generated
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">Would you like to mark these students as <strong>"Assessment Generated"</strong> for <strong>{{ assessmentDate | date:'mediumDate' }}</strong>?</p>
+        
+        <div class="alert alert-info">
+          <h6 class="alert-heading mb-2">
+            <i class="fas fa-users me-1"></i>
+            Selected Students ({{ selectedStudents.length }}):
+          </h6>
+          <ul class="mb-0">
+            <li *ngFor="let student of selectedStudents">
+              {{ getStudentFullName(student) }} - {{ student.student_number }}
+            </li>
+          </ul>
+        </div>
+        
+        <p class="text-muted small mb-0">
+          <i class="fas fa-info-circle me-1"></i>
+          This will help track which students have already had their assessments printed and prevent duplicate generation.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelFlagStudents()">
+          <i class="fas fa-times me-1"></i>
+          Cancel
+        </button>
+        <button type="button" class="btn btn-success" (click)="confirmFlagStudents()">
+          <i class="fas fa-flag me-1"></i>
+          Yes, Mark as Generated
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showFlagModal" *ngIf="showFlagModal"></div>

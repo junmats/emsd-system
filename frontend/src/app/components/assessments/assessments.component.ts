@@ -83,6 +83,7 @@ export class AssessmentsComponent implements OnInit {
   // Assessment flags
   assessmentFlags: AssessmentFlag[] = [];
   flaggedStudentIds: Set<number> = new Set();
+  showFlagModal = false;
   
   // Filters
   selectedGrade: number | string = '';
@@ -376,8 +377,8 @@ export class AssessmentsComponent implements OnInit {
       </head>
       <body>
         <div class="header">
-          <div class="school-name">Eager Minds School Of Dalaguete</div>
-          <div class="school-address">Poblacion, Dalaguete, Cebu 6022</div>
+          <div class="school-name">Eager Minds School of Dalaguete</div>
+          <div class="school-address">Poblacion, Dalaguete, Cebu</div>
           <div class="statement-title">Statement of Account</div>
         </div>
 
@@ -646,12 +647,16 @@ export class AssessmentsComponent implements OnInit {
   }
 
   private showFlagConfirmationDialog() {
-    const studentNames = this.selectedStudents.map(s => this.getStudentFullName(s)).join(', ');
-    const message = `Would you like to mark these students as "Assessment Generated" for ${new Date(this.assessmentDate).toLocaleDateString()}?\n\nStudents: ${studentNames}\n\nThis will help track which students have already had their assessments printed.`;
-    
-    if (confirm(message)) {
-      this.flagSelectedStudents();
-    }
+    this.showFlagModal = true;
+  }
+
+  confirmFlagStudents() {
+    this.showFlagModal = false;
+    this.flagSelectedStudents();
+  }
+
+  cancelFlagStudents() {
+    this.showFlagModal = false;
   }
 
   private async flagSelectedStudents() {
@@ -659,23 +664,27 @@ export class AssessmentsComponent implements OnInit {
 
     try {
       const studentIds = this.selectedStudents.map(s => s.id);
-      const response = await this.assessmentFlagsService.setAssessmentFlags(studentIds, this.assessmentDate).toPromise();
       
-      if (response?.success) {
-        // Reload flags to update UI
-        await this.loadAssessmentFlags();
-        
-        // Show success message
-        alert(`Successfully marked ${studentIds.length} students as "Assessment Generated"`);
-        
-        // Optionally clear selection
-        this.clearBatchSelection();
-      } else {
-        alert('Failed to set assessment flags');
-      }
+      this.assessmentFlagsService.setAssessmentFlags(studentIds, this.assessmentDate).subscribe({
+        next: (response) => {
+          if (response?.success) {
+            // Reload flags to update UI
+            this.loadAssessmentFlags();
+            
+            // Clear selection and reset checkboxes
+            this.clearBatchSelection();
+            
+            console.log(`Successfully marked ${studentIds.length} students as "Assessment Generated"`);
+          } else {
+            console.error('Failed to set assessment flags');
+          }
+        },
+        error: (error) => {
+          console.error('Error setting assessment flags:', error);
+        }
+      });
     } catch (error) {
       console.error('Error setting assessment flags:', error);
-      alert('Error setting assessment flags');
     }
   }
 
@@ -728,6 +737,11 @@ export class AssessmentsComponent implements OnInit {
       <head>
         <title>Batch Assessment</title>
         <style>
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
+          
           @media print {
             body { margin: 0; }
             .page-break { page-break-after: always; }
@@ -735,69 +749,77 @@ export class AssessmentsComponent implements OnInit {
           
           body {
             font-family: Arial, sans-serif;
-            font-size: 11px;
-            margin: 10px;
+            font-size: 12px;
+            margin: 0;
+            padding: 15px;
           }
           
           .assessment-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 20px;
+            margin-bottom: 25px;
           }
           
           .assessment-card {
             border: 2px solid #333;
-            padding: 10px;
+            padding: 15px;
             background: white;
-            min-height: 250px;
+            min-height: 320px;
+            page-break-inside: avoid;
           }
           
           .header {
             text-align: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
-            margin-bottom: 8px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
           }
           
           .school-name {
             font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 2px;
+            font-size: 14px;
+            margin-bottom: 3px;
+          }
+          
+          .school-address {
+            font-size: 11px;
+            margin-bottom: 3px;
+            color: #666;
           }
           
           .document-title {
             font-weight: bold;
-            font-size: 11px;
+            font-size: 13px;
           }
           
           .student-info {
-            margin-bottom: 8px;
-            font-size: 10px;
+            margin-bottom: 12px;
+            font-size: 11px;
           }
           
           .charges-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
-            font-size: 8px;
+            margin-bottom: 10px;
+            font-size: 10px;
           }
           
           .charges-table th,
           .charges-table td {
             border: 1px solid #333;
-            padding: 1px 3px;
+            padding: 4px 6px;
             text-align: left;
           }
           
           .charges-table th:first-child,
           .charges-table td:first-child {
-            width: 40%;
+            width: 50%;
           }
           
           .charges-table th:not(:first-child),
           .charges-table td:not(:first-child) {
-            width: 20%;
+            width: 25%;
           }
           
           .charges-table th {
@@ -810,27 +832,27 @@ export class AssessmentsComponent implements OnInit {
           }
           
           .totals {
-            margin: 8px 0;
-            font-size: 10px;
+            margin: 10px 0;
+            font-size: 11px;
           }
           
           .current-due {
             text-align: center;
             border: 2px solid #333;
-            padding: 5px;
-            margin: 8px 0;
+            padding: 8px;
+            margin: 10px 0;
             background-color: #f9f9f9;
           }
           
           .current-due-amount {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
           }
           
           .dates {
             text-align: center;
-            font-size: 8px;
-            margin-top: 5px;
+            font-size: 10px;
+            margin-top: 8px;
           }
         </style>
       </head>
@@ -873,8 +895,9 @@ export class AssessmentsComponent implements OnInit {
     return `
       <div class="assessment-card">
         <div class="header">
-          <div class="school-name">ELEMENTARY SCHOOL</div>
-          <div class="document-title">STUDENT ASSESSMENT</div>
+          <div class="school-name">Eager Minds School of Dalaguete</div>
+          <div class="school-address">Poblacion, Dalaguete, Cebu</div>
+          <div class="document-title">STATEMENT OF ACCOUNT</div>
         </div>
 
         <div class="student-info">
@@ -891,19 +914,16 @@ export class AssessmentsComponent implements OnInit {
               <th>Description</th>
               <th>Amount</th>
               <th>Paid</th>
-              <th>Balance</th>
             </tr>
           </thead>
           <tbody>
             ${assessment.charges.map(charge => {
               const paidAmount = this.getBatchPaymentAmountForCharge(assessment, charge.id);
-              const balance = charge.amount - paidAmount;
               return `
               <tr>
                 <td>${charge.name}</td>
                 <td class="amount">₱${charge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
                 <td class="amount">₱${paidAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                <td class="amount">₱${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
               </tr>
               `;
             }).join('')}
