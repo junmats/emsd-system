@@ -478,6 +478,12 @@ export class AssessmentsComponent implements OnInit {
     return !this.isStudentSelected(student) && this.selectedStudents.length >= 6;
   }
 
+  onRowClick(student: Student) {
+    if (this.currentMode === 'batch' && !this.isCheckboxDisabled(student)) {
+      this.toggleStudentSelection(student);
+    }
+  }
+
   clearBatchSelection() {
     this.selectedStudents = [];
     this.batchAssessments = [];
@@ -513,9 +519,17 @@ export class AssessmentsComponent implements OnInit {
       const paymentsResponse = await this.paymentService.getPayments({ student_id: student.id }).toPromise();
       const payments = paymentsResponse?.data || [];
 
-      // Calculate totals 
-      const totalCharges = charges.reduce((sum: number, charge: any) => sum + charge.amount, 0);
-      const totalPaid = payments.reduce((sum: number, payment: any) => sum + payment.total_amount, 0);
+      // Calculate totals with proper type handling
+      const totalCharges = charges.reduce((sum: number, charge: any) => {
+        const amount = typeof charge.amount === 'string' ? parseFloat(charge.amount) : charge.amount;
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
+      
+      const totalPaid = payments.reduce((sum: number, payment: any) => {
+        const amount = typeof payment.total_amount === 'string' ? parseFloat(payment.total_amount) : payment.total_amount;
+        return sum + (isNaN(amount) ? 0 : amount);
+      }, 0);
+      
       const totalPayable = totalCharges - totalPaid;
 
       // Map payments to PaymentRecord format
@@ -537,9 +551,19 @@ export class AssessmentsComponent implements OnInit {
         })) || []
       }));
 
+      // Map charges to ensure proper format
+      const mappedCharges: ChargeBreakdown[] = charges.map(charge => ({
+        id: charge.id,
+        name: charge.name,
+        description: charge.description || '',
+        amount: typeof charge.amount === 'string' ? parseFloat(charge.amount) : charge.amount,
+        charge_type: charge.charge_type || 'misc',
+        is_mandatory: charge.is_mandatory || false
+      }));
+
       return {
         student,
-        charges,
+        charges: mappedCharges,
         payments: mappedPayments,
         totalCharges,
         totalPaid,
