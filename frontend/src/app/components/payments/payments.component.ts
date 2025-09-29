@@ -63,6 +63,8 @@ export class PaymentsComponent implements OnInit {
   // Modal states
   showStudentSelector = false;
   showPaymentDetails = false;
+  selectedPayment: Payment | null = null;
+  selectedPaymentItems: PaymentItem[] = [];
   
   // Error handling
   error: string | null = null;
@@ -668,6 +670,38 @@ export class PaymentsComponent implements OnInit {
       </body>
       </html>
     `;
+  }
+
+  // Payment details modal methods
+  async viewPayment(payment: Payment) {
+    // Start with the payment from the list (which has grade_level, status, etc.)
+    this.selectedPayment = payment;
+    this.selectedPaymentItems = [];
+    
+    try {
+      // Load payment details with items
+      const response = await this.paymentService.getPayment(payment.id).toPromise();
+      if (response?.success) {
+        // Merge the API response with the original payment data to preserve list-specific fields
+        this.selectedPayment = { ...payment, ...response.data };
+        this.selectedPaymentItems = response.data.items || [];
+      }
+    } catch (error) {
+      console.error('Error loading payment details:', error);
+      // Continue showing the modal even if items fail to load
+    }
+    
+    this.showPaymentDetails = true;
+  }
+
+  closePaymentDetails() {
+    this.showPaymentDetails = false;
+    this.selectedPayment = null;
+    this.selectedPaymentItems = [];
+  }
+
+  getPaymentProperty(property: string): any {
+    return this.selectedPayment ? (this.selectedPayment as any)[property] : null;
   }
 
   private formatCurrencyValue(amount: number): string {

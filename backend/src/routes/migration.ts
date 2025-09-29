@@ -4,6 +4,76 @@ import { getConnection } from '../config/database';
 
 const router = Router();
 
+// Create assessment tables migration
+router.post('/create-assessment-tables', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const connection = getConnection();
+    
+    console.log('Creating assessment tables...');
+    
+    // Create assessment_batches table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS assessment_batches (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        batch_name VARCHAR(255) NOT NULL,
+        assessment_date DATE NOT NULL,
+        due_date DATE NOT NULL,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT
+      )
+    `);
+    console.log('Created assessment_batches table');
+    
+    // Create assessments table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS assessments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        batch_id INT NOT NULL,
+        student_id INT NOT NULL,
+        assessment_date DATE NOT NULL,
+        due_date DATE NOT NULL,
+        total_charges DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        total_paid DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        current_due DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (batch_id) REFERENCES assessment_batches(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+        UNIQUE KEY unique_batch_student (batch_id, student_id)
+      )
+    `);
+    console.log('Created assessments table');
+    
+    // Create indexes
+    try {
+      await connection.execute('CREATE INDEX idx_assessment_batches_created_at ON assessment_batches(created_at)');
+      await connection.execute('CREATE INDEX idx_assessment_batches_assessment_date ON assessment_batches(assessment_date)');
+      await connection.execute('CREATE INDEX idx_assessments_batch_id ON assessments(batch_id)');
+      await connection.execute('CREATE INDEX idx_assessments_student_id ON assessments(student_id)');
+      await connection.execute('CREATE INDEX idx_assessments_assessment_date ON assessments(assessment_date)');
+      console.log('Created indexes');
+    } catch (error: any) {
+      console.log('Some indexes may already exist:', error.message);
+    }
+
+    res.json({
+      success: true,
+      message: 'Assessment tables created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating assessment tables:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create assessment tables',
+      error: (error as Error).message
+    });
+  }
+});
+
 // Temporary migration endpoint - remove after running
 router.post('/add-invoice-numbers', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

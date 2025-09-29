@@ -396,6 +396,7 @@
                   </td>
                   <td>
                     <button class="btn btn-sm btn-outline-primary me-1" 
+                            (click)="viewPayment(payment)"
                             title="View Details">
                       View
                     </button>
@@ -491,6 +492,167 @@
       </div>
       <div class="modal-footer" style="flex-shrink: 0;">
         <button type="button" class="btn btn-secondary" (click)="showStudentSelector = false">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Details Modal -->
+<div class="modal fade" 
+     [class.show]="showPaymentDetails" 
+     [style.display]="showPaymentDetails ? 'block' : 'none'" 
+     *ngIf="showPaymentDetails">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-receipt me-2"></i>
+          Payment Details
+          <span *ngIf="selectedPayment?.invoice_number" class="text-muted ms-2">
+            ({{ selectedPayment?.invoice_number }})
+          </span>
+        </h5>
+        <button type="button" class="btn-close" (click)="closePaymentDetails()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedPayment">
+        <!-- Payment Info -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Payment Information</h6>
+              </div>
+              <div class="card-body">
+                <dl class="row mb-0">
+                  <dt class="col-sm-5">Invoice Number:</dt>
+                  <dd class="col-sm-7">
+                    <span *ngIf="selectedPayment.invoice_number" class="fw-bold text-primary">
+                      {{ selectedPayment.invoice_number }}
+                    </span>
+                    <span *ngIf="!selectedPayment.invoice_number" class="text-muted">Not assigned</span>
+                  </dd>
+                  
+                  <dt class="col-sm-5">Date:</dt>
+                  <dd class="col-sm-7">{{ selectedPayment.payment_date | date:'fullDate' }}</dd>
+                  
+                  <dt class="col-sm-5">Method:</dt>
+                  <dd class="col-sm-7">
+                    <span class="badge bg-primary">{{ selectedPayment.payment_method | titlecase }}</span>
+                  </dd>
+                  
+                  <dt class="col-sm-5">Reference:</dt>
+                  <dd class="col-sm-7">
+                    <span *ngIf="selectedPayment.reference_number">{{ selectedPayment.reference_number }}</span>
+                    <span *ngIf="!selectedPayment.reference_number" class="text-muted">-</span>
+                  </dd>
+                  
+                  <dt class="col-sm-5">Total Amount:</dt>
+                  <dd class="col-sm-7">
+                    <span class="fw-bold text-success fs-5">{{ formatCurrency(selectedPayment.total_amount) }}</span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-user-graduate me-2"></i>Student Information</h6>
+              </div>
+              <div class="card-body">
+                <dl class="row mb-0">
+                  <dt class="col-sm-5">Name:</dt>
+                  <dd class="col-sm-7">
+                    <strong>{{ selectedPayment.first_name }} {{ selectedPayment.last_name }}</strong>
+                  </dd>
+                  
+                  <dt class="col-sm-5">Student Number:</dt>
+                  <dd class="col-sm-7">{{ selectedPayment.student_number }}</dd>
+                  
+                  <dt class="col-sm-5" *ngIf="getPaymentProperty('grade_level')">Grade Level:</dt>
+                  <dd class="col-sm-7" *ngIf="getPaymentProperty('grade_level')">Grade {{ getPaymentProperty('grade_level') }}</dd>
+                  
+                  <dt class="col-sm-5" *ngIf="getPaymentProperty('status')">Status:</dt>
+                  <dd class="col-sm-7" *ngIf="getPaymentProperty('status')">
+                    <span class="badge bg-success">{{ getPaymentProperty('status') | titlecase }}</span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Items -->
+        <div class="card" *ngIf="selectedPaymentItems && selectedPaymentItems.length > 0">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-list me-2"></i>Payment Breakdown</h6>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Charge Type</th>
+                    <th>Description</th>
+                    <th class="text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of selectedPaymentItems">
+                    <td>
+                      <span class="badge bg-info">{{ item.charge_name }}</span>
+                    </td>
+                    <td>{{ item.description || '-' }}</td>
+                    <td class="text-end">
+                      <span class="fw-bold">{{ formatCurrency(item.amount) }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-light">
+                    <th colspan="2">Total</th>
+                    <th class="text-end">
+                      <span class="fw-bold text-success">{{ formatCurrency(selectedPayment.total_amount) }}</span>
+                    </th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card mt-3" *ngIf="selectedPayment.notes">
+          <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Notes</h6>
+          </div>
+          <div class="card-body">
+            <p class="mb-0">{{ selectedPayment.notes }}</p>
+          </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="row mt-3">
+          <div class="col-12">
+            <div class="card bg-light">
+              <div class="card-body py-2">
+                <small class="text-muted">
+                  <i class="fas fa-clock me-1"></i>
+                  Created on {{ selectedPayment.created_at | date:'medium' }} by {{ selectedPayment.created_by_username }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" 
+                (click)="printInvoice(selectedPayment)"
+                *ngIf="selectedPayment">
+          <i class="fas fa-print me-2"></i>Print Invoice
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="closePaymentDetails()">Close</button>
       </div>
     </div>
   </div>
