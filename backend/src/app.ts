@@ -26,6 +26,7 @@ app.use(helmet());
 const allowedOrigins: (string | RegExp)[] = [
   'http://localhost:4200',
   'http://localhost:4201',
+  'http://localhost:4202',
   process.env.FRONTEND_URL || 'http://localhost:4201'
 ];
 

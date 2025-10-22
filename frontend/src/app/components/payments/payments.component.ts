@@ -100,14 +100,40 @@ export class PaymentsComponent implements OnInit {
     }
   }
 
-  async loadPayments() {
+  async loadPayments(filters?: { searchTerm?: string; dateFilter?: string; methodFilter?: string }) {
     this.loading = true;
     this.error = null;
     
     try {
-      const response = await this.paymentService.getPayments({ limit: 100 }).toPromise();
+      const params: any = { limit: 100 };
+      
+      // Apply filters if provided
+      if (filters?.dateFilter) {
+        params.start_date = filters.dateFilter;
+        params.end_date = filters.dateFilter;
+      }
+      
+      if (filters?.methodFilter) {
+        params.payment_method = filters.methodFilter;
+      }
+      
+      const response = await this.paymentService.getPayments(params).toPromise();
       if (response?.success) {
-        this.payments = response.data;
+        let payments = response.data;
+        
+        // Apply search filter on client side (if search term is provided)
+        if (filters?.searchTerm) {
+          const searchLower = filters.searchTerm.toLowerCase();
+          payments = payments.filter(payment =>
+            (payment.first_name?.toLowerCase().includes(searchLower) || false) ||
+            (payment.last_name?.toLowerCase().includes(searchLower) || false) ||
+            (payment.student_number?.toLowerCase().includes(searchLower) || false) ||
+            (payment.reference_number?.toLowerCase().includes(searchLower) || false) ||
+            (payment.invoice_number?.toLowerCase().includes(searchLower) || false)
+          );
+        }
+        
+        this.payments = payments;
       }
     } catch (error) {
       console.error('Error loading payments:', error);
@@ -138,12 +164,6 @@ export class PaymentsComponent implements OnInit {
   }
 
   // Tab management
-  switchTab(tab: 'create' | 'history') {
-    this.activeTab = tab;
-    if (tab === 'history' && this.payments.length === 0) {
-      this.loadPayments();
-    }
-  }
 
   // Student selection
   onStudentSearch() {
@@ -370,17 +390,22 @@ export class PaymentsComponent implements OnInit {
 
   // Payment history filters
   onPaymentSearch() {
-    // Implementation for payment search
+    this.applyPaymentFilters();
   }
 
   applyPaymentFilters() {
-    // Implementation for payment filters
+    this.loadPayments({
+      searchTerm: this.paymentSearchTerm,
+      dateFilter: this.selectedPaymentDateFilter,
+      methodFilter: this.selectedPaymentMethodFilter
+    });
   }
 
   clearPaymentFilters() {
     this.paymentSearchTerm = '';
     this.selectedPaymentDateFilter = '';
     this.selectedPaymentMethodFilter = '';
+    this.loadPayments();
   }
 
   // Utility methods
@@ -710,4 +735,51 @@ export class PaymentsComponent implements OnInit {
       maximumFractionDigits: 2
     }).format(amount);
   }
+
+  // Revert payment modal and methods
+  showRevertModal = false;
+  revertPaymentData: Payment | null = null;
+  revertReason = '';
+  reverting = false;
+
+  showRevertPaymentModal(payment: Payment) {
+    this.revertPaymentData = payment;
+    this.revertReason = '';
+    this.showRevertModal = true;
+  }
+
+  closeRevertPaymentModal() {
+    this.showRevertModal = false;
+    this.revertPaymentData = null;
+    this.revertReason = '';
+  }
+
+  confirmRevertPayment() {
+    if (!this.revertPaymentData || !this.revertReason.trim()) {
+      alert('Please provide a reason for reverting the payment');
+      return;
+    }
+
+    this.reverting = true;
+
+    this.paymentService.revertPayment(this.revertPaymentData.id, this.revertReason).subscribe({
+      next: (response) => {
+        this.reverting = false;
+        
+        if (response.success) {
+          this.showToast('Payment reverted successfully', 'success');
+          this.closeRevertPaymentModal();
+          this.loadPayments(); // Reload payment list
+        } else {
+          this.showToast(response.message || 'Failed to revert payment', 'error');
+        }
+      },
+      error: (error) => {
+        this.reverting = false;
+        console.error('Error reverting payment:', error);
+        this.showToast(error?.error?.message || 'Error reverting payment', 'error');
+      }
+    });
+  }
 }
+

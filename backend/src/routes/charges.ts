@@ -296,6 +296,7 @@ router.get('/students/summary', async (req: AuthRequest, res: Response, next: Ne
           student_id,
           SUM(total_amount) as total_payments
         FROM payments 
+        WHERE reverted = 0
         GROUP BY student_id
       ) payments_summary ON payments_summary.student_id = s.id
       LEFT JOIN (
@@ -357,9 +358,9 @@ router.get('/students/:studentId/breakdown', async (req: AuthRequest, res: Respo
       [student.grade_level]
     );
     
-    // Get all payments made by this student
+    // Get all payments made by this student (excluding reverted payments)
     const [payments] = await connection.execute(
-      `SELECT id, total_amount, payment_date, notes, created_at
+      `SELECT id, total_amount, payment_date, notes, created_at, reverted
        FROM payments 
        WHERE student_id = ? 
        ORDER BY payment_date DESC, created_at DESC`,
@@ -379,7 +380,9 @@ router.get('/students/:studentId/breakdown', async (req: AuthRequest, res: Respo
     // Calculate totals
     const totalCharges = (charges as any[]).reduce((sum, charge) => sum + (parseFloat(charge.amount) || 0), 0);
     const mandatoryCharges = (charges as any[]).filter(c => c.is_mandatory).reduce((sum, charge) => sum + (parseFloat(charge.amount) || 0), 0);
-    const totalPayments = (payments as any[]).reduce((sum, payment) => sum + (parseFloat(payment.total_amount) || 0), 0);
+    const totalPayments = (payments as any[])
+      .filter(payment => !payment.reverted)  // Exclude reverted payments
+      .reduce((sum, payment) => sum + (parseFloat(payment.total_amount) || 0), 0);
     const totalBackPayments = (backPayments as any[]).reduce((sum, bp) => {
       const amountDue = parseFloat(bp.amount_due) || 0;
       const amountPaid = parseFloat(bp.amount_paid) || 0;

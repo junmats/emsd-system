@@ -793,16 +793,24 @@
                   <tr>
                     <th>Date</th>
                     <th>Amount</th>
+                    <th>Status</th>
                     <th>Notes</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let payment of studentBreakdown.payments">
+                  <tr *ngFor="let payment of studentBreakdown.payments" [class.table-danger]="payment.reverted" [class.opacity-50]="payment.reverted">
                     <td>
                       <small>{{ formatDate(payment.payment_date) }}</small>
                     </td>
                     <td>
-                      <strong class="text-success">{{ formatCurrency(payment.total_amount) }}</strong>
+                      <strong [class.text-success]="!payment.reverted" [class.text-muted]="payment.reverted">{{ formatCurrency(payment.total_amount) }}</strong>
+                    </td>
+                    <td>
+                      <span class="badge badge-sm"
+                            [class.bg-success]="!payment.reverted"
+                            [class.bg-danger]="payment.reverted">
+                        {{ payment.reverted ? 'Reverted' : 'Active' }}
+                      </span>
                     </td>
                     <td>
                       <small class="text-muted">{{ payment.notes || '-' }}</small>

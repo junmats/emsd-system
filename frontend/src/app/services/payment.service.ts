@@ -29,6 +29,9 @@ export interface Payment {
   middle_name?: string;
   student_number?: string;
   created_by_username?: string;
+  reverted?: boolean;
+  reverted_date?: string;
+  reverted_reason?: string;
   items?: PaymentItem[];
 }
 
@@ -75,7 +78,8 @@ export class PaymentService {
   getPayments(params?: { 
     student_id?: number; 
     start_date?: string; 
-    end_date?: string; 
+    end_date?: string;
+    payment_method?: string;
     page?: number; 
     limit?: number 
   }): Observable<PaymentListResponse> {
@@ -118,5 +122,9 @@ export class PaymentService {
 
   deletePayment(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  revertPayment(id: number, reason?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/revert`, { reason });
   }
 }

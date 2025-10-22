@@ -6,7 +6,7 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" 
                   [class.active]="activeTab === 'create'"
-                  (click)="switchTab('create')"
+                  (click)="activeTab = 'create'"
                   type="button" role="tab">
             Create Payment
           </button>
@@ -14,7 +14,7 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link"
                   [class.active]="activeTab === 'history'"
-                  (click)="switchTab('history')"
+                  (click)="activeTab = 'history'"
                   type="button" role="tab">
             Payment History
             <span class="badge bg-primary ms-2" *ngIf="activeTab === 'history'">{{ payments.length }}</span>
@@ -363,12 +363,13 @@
                   <th>Amount</th>
                   <th>Method</th>
                   <th>Reference</th>
+                  <th>Status</th>
                   <th>Created By</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let payment of payments">
+                <tr *ngFor="let payment of payments" [class.table-danger]="payment.reverted" [class.opacity-50]="payment.reverted">
                   <td>
                     <span *ngIf="payment.invoice_number" class="fw-bold text-primary">{{ payment.invoice_number }}</span>
                     <span *ngIf="!payment.invoice_number" class="text-muted">-</span>
@@ -392,6 +393,14 @@
                     <span *ngIf="!payment.reference_number" class="text-muted">-</span>
                   </td>
                   <td>
+                    <span *ngIf="payment.reverted" class="badge bg-danger">
+                      <i class="fas fa-undo me-1"></i>Reverted
+                    </span>
+                    <span *ngIf="!payment.reverted" class="badge bg-success">
+                      Active
+                    </span>
+                  </td>
+                  <td>
                     <small>{{ payment.created_by_username }}</small>
                   </td>
                   <td>
@@ -400,10 +409,17 @@
                             title="View Details">
                       View
                     </button>
-                    <button class="btn btn-sm btn-outline-success" 
+                    <button class="btn btn-sm btn-outline-success me-1" 
                             (click)="printInvoice(payment)"
+                            [disabled]="payment.reverted"
                             title="Print Invoice">
                       <i class="fas fa-print"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            (click)="showRevertPaymentModal(payment)"
+                            [disabled]="payment.reverted"
+                            [title]="payment.reverted ? 'Payment already reverted' : 'Revert Payment'">
+                      <i class="fas fa-undo"></i>
                     </button>
                   </td>
                 </tr>
@@ -673,6 +689,82 @@
         {{ toast.message }}
       </div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" (click)="removeToast(toast.id)"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Revert Payment Modal -->
+<div class="modal fade" 
+     [class.show]="showRevertModal" 
+     [style.display]="showRevertModal ? 'block' : 'none'" 
+     *ngIf="showRevertModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Revert Payment
+        </h5>
+        <button type="button" class="btn-close" (click)="closeRevertPaymentModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="revertPaymentData">
+        <div class="alert alert-warning">
+          <h6 class="alert-heading">
+            <i class="fas fa-info-circle me-2"></i>
+            Warning: This action will reverse the payment
+          </h6>
+          <p class="mb-0">Once reverted, all charges previously paid by this payment will be restored to unpaid status.</p>
+        </div>
+
+        <!-- Payment Details to Revert -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h6 class="mb-0">Payment Details</h6>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-4">Invoice Number:</dt>
+              <dd class="col-sm-8">{{ revertPaymentData.invoice_number || '-' }}</dd>
+              
+              <dt class="col-sm-4">Student:</dt>
+              <dd class="col-sm-8">
+                <strong>{{ revertPaymentData.first_name }} {{ revertPaymentData.last_name }}</strong><br>
+                <small class="text-muted">{{ revertPaymentData.student_number }}</small>
+              </dd>
+              
+              <dt class="col-sm-4">Amount:</dt>
+              <dd class="col-sm-8">
+                <span class="fw-bold text-danger fs-5">{{ formatCurrency(revertPaymentData.total_amount) }}</span>
+              </dd>
+              
+              <dt class="col-sm-4">Payment Date:</dt>
+              <dd class="col-sm-8">{{ revertPaymentData.payment_date | date:'mediumDate' }}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Revert Reason -->
+        <div class="mb-3">
+          <label for="revertReason" class="form-label">Reason for Revert (Required)</label>
+          <textarea class="form-control" 
+                    id="revertReason"
+                    [(ngModel)]="revertReason"
+                    rows="4"
+                    placeholder="Enter the reason for reverting this payment..."></textarea>
+          <small class="form-text text-muted">This reason will be recorded in the system for audit purposes.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeRevertPaymentModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger" 
+                (click)="confirmRevertPayment()"
+                [disabled]="!revertReason || revertReason.trim().length === 0 || reverting">
+          <span *ngIf="reverting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ reverting ? 'Reverting...' : 'Confirm Revert' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

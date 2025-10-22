@@ -29,7 +29,7 @@ async function generateInvoiceNumber(connection: any): Promise<string> {
 // Get all payments
 router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { student_id, start_date, end_date, page = 1, limit = 50 } = req.query;
+    const { student_id, start_date, end_date, payment_method, page = 1, limit = 50 } = req.query;
     const connection = getConnection();
     
     let query = `
@@ -54,6 +54,11 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (end_date) {
       query += ' AND p.payment_date <= ?';
       params.push(end_date);
+    }
+
+    if (payment_method) {
+      query += ' AND p.payment_method = ?';
+      params.push(payment_method);
     }
     
     const offset = (Number(page) - 1) * Number(limit);
@@ -94,6 +99,11 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (end_date) {
       countQuery += ' AND p.payment_date <= ?';
       countParams.push(end_date);
+    }
+
+    if (payment_method) {
+      countQuery += ' AND p.payment_method = ?';
+      countParams.push(payment_method);
     }
     
     const [countResult] = await connection.execute(countQuery, countParams);
@@ -361,6 +371,171 @@ router.get('/student/:student_id', async (req: AuthRequest, res: Response, next:
         }
       }
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Revert payment (admin only) - Mark payment as reverted and restore student charges
+router.post('/:id/revert', requireRole(['admin']), async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    console.log(`[REVERT] START: Payment ${id} revert requested with reason: ${reason}`);
+    const pool = getConnection();
+
+    // Get connection and start transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // Get payment details
+      const [payments] = await connection.execute(
+        'SELECT * FROM payments WHERE id = ?',
+        [id]
+      );
+
+      if (!Array.isArray(payments) || payments.length === 0) {
+        connection.release();
+        return next(createError('Payment not found', 404));
+      }
+
+      const payment = payments[0] as any;
+
+      // Check if already reverted
+      if (payment.reverted) {
+        connection.release();
+        return next(createError('Payment has already been reverted', 400));
+      }
+
+      // Get payment items to reverse student charges (both regular charges and manual charges for back payments)
+      const [items] = await connection.execute(
+        'SELECT charge_id, amount, description, is_manual_charge FROM payment_items WHERE payment_id = ?',
+        [id]
+      );
+
+      console.log(`[REVERT] Payment ${id} revert starting. Items found:`, items);
+
+      // Reverse student charges
+      for (const item of items as any[]) {
+        // Handle regular charge items
+        if (item.charge_id) {
+          const [currentCharges] = await connection.execute(
+            `SELECT amount_paid, amount_due FROM student_charges 
+             WHERE student_id = ? AND charge_id = ?`,
+            [payment.student_id, item.charge_id]
+          );
+
+          console.log(`[REVERT] Charge ${item.charge_id} current state:`, currentCharges);
+
+          if (Array.isArray(currentCharges) && currentCharges.length > 0) {
+            const currentCharge = currentCharges[0] as any;
+            const newAmountPaid = Math.max(0, currentCharge.amount_paid - item.amount);
+
+            console.log(`[REVERT] Updating charge ${item.charge_id}: ${currentCharge.amount_paid} - ${item.amount} = ${newAmountPaid}`);
+
+            // Update the amount paid
+            await connection.execute(
+              `UPDATE student_charges 
+               SET amount_paid = ?
+               WHERE student_id = ? AND charge_id = ?`,
+              [newAmountPaid, payment.student_id, item.charge_id]
+            );
+
+            console.log(`[REVERT] Updated charge ${item.charge_id} amount_paid to ${newAmountPaid}`);
+
+            // Update status based on remaining balance
+            let newStatus = 'pending';
+            if (newAmountPaid >= currentCharge.amount_due && currentCharge.amount_due > 0) {
+              newStatus = 'paid';
+            } else if (newAmountPaid > 0) {
+              newStatus = 'partial';
+            }
+
+            await connection.execute(
+              `UPDATE student_charges 
+               SET status = ?
+               WHERE student_id = ? AND charge_id = ?`,
+              [newStatus, payment.student_id, item.charge_id]
+            );
+          }
+        }
+
+        // Handle back payment updates if this is a back payment item
+        if (item.is_manual_charge && item.description && item.description.includes('Back Payment:')) {
+          // Try to identify which back payment this relates to based on description
+          const backPaymentMatch = item.description.match(/Back Payment: (.+) \(Grade (\d+) → (\d+)\)/);
+          if (backPaymentMatch) {
+            const chargeName = backPaymentMatch[1];
+            const originalGrade = parseInt(backPaymentMatch[2]);
+            const currentGrade = parseInt(backPaymentMatch[3]);
+            
+            // Get current back payment details
+            const [currentBackPayments] = await connection.execute(
+              `SELECT amount_paid, amount_due FROM back_payments 
+               WHERE student_id = ? 
+                 AND original_grade_level = ? 
+                 AND current_grade_level = ? 
+                 AND charge_name = ?`,
+              [payment.student_id, originalGrade, currentGrade, chargeName]
+            );
+
+            if (Array.isArray(currentBackPayments) && currentBackPayments.length > 0) {
+              const currentBackPayment = currentBackPayments[0] as any;
+              const newAmountPaid = Math.max(0, currentBackPayment.amount_paid - item.amount);
+
+              // Determine new status
+              let newStatus = 'pending';
+              if (newAmountPaid >= currentBackPayment.amount_due && currentBackPayment.amount_due > 0) {
+                newStatus = 'paid';
+              } else if (newAmountPaid > 0) {
+                newStatus = 'partial';
+              }
+
+              // Update the back payment
+              await connection.execute(
+                `UPDATE back_payments 
+                 SET amount_paid = ?,
+                     status = ?,
+                     updated_at = NOW()
+                 WHERE student_id = ? 
+                   AND original_grade_level = ? 
+                   AND current_grade_level = ? 
+                   AND charge_name = ?`,
+                [newAmountPaid, newStatus, payment.student_id, originalGrade, currentGrade, chargeName]
+              );
+            }
+          }
+        }
+      }
+
+      // Mark payment as reverted
+      await connection.execute(
+        `UPDATE payments 
+         SET reverted = 1, reverted_date = NOW(), reverted_reason = ?
+         WHERE id = ?`,
+        [reason || 'Manual revert', id]
+      );
+
+      console.log(`[REVERT] SUCCESS: Payment ${id} marked as reverted in database`);
+
+      await connection.commit();
+      connection.release();
+
+      res.json({
+        success: true,
+        message: 'Payment reverted successfully',
+        data: {
+          payment_id: id,
+          reverted_date: new Date(),
+          reverted_reason: reason
+        }
+      });
+    } catch (error) {
+      await connection.rollback();
+      connection.release();
+      throw error;
+    }
   } catch (error) {
     next(error);
   }

@@ -31,6 +31,7 @@ interface PaymentRecord {
   total_amount: number;
   payment_date: string;
   notes: string;
+  reverted?: boolean;
   items?: PaymentItem[];
 }
 
@@ -172,7 +173,9 @@ export class AssessmentsComponent implements OnInit {
 
   createAssessment(student: Student, charges: ChargeBreakdown[], payments: PaymentRecord[]) {
     const totalCharges = charges.reduce((sum, charge) => sum + parseFloat(charge.amount.toString()), 0);
-    const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.total_amount.toString()), 0);
+    const totalPaid = payments
+      .filter(payment => !payment.reverted)  // Exclude reverted payments
+      .reduce((sum, payment) => sum + parseFloat(payment.total_amount.toString()), 0);
     const totalPayable = totalCharges - totalPaid;
 
     // Set currentDue to calculated value (can be overridden by user input)
@@ -546,7 +549,9 @@ export class AssessmentsComponent implements OnInit {
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
       
-      const totalPaid = payments.reduce((sum: number, payment: any) => {
+      const totalPaid = payments
+        .filter((payment: any) => !payment.reverted)  // Exclude reverted payments
+        .reduce((sum: number, payment: any) => {
         const amount = typeof payment.total_amount === 'string' ? parseFloat(payment.total_amount) : payment.total_amount;
         return sum + (isNaN(amount) ? 0 : amount);
       }, 0);
@@ -559,6 +564,7 @@ export class AssessmentsComponent implements OnInit {
         total_amount: payment.total_amount,
         payment_date: payment.payment_date,
         notes: payment.notes || '',
+        reverted: payment.reverted || false,
         items: payment.items?.map(item => ({
           id: item.id || 0,
           payment_id: payment.id,

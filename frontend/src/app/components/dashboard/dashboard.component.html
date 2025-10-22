@@ -158,9 +158,9 @@
                           [ngClass]="{
                             'bg-success': payment.status === 'completed',
                             'bg-warning': payment.status === 'pending',
-                            'bg-danger': payment.status === 'failed'
+                            'bg-danger': payment.status === 'failed' || payment.status === 'reverted'
                           }">
-                      {{ payment.status }}
+                      {{ payment.status | titlecase }}
                     </span>
                   </td>
                 </tr>

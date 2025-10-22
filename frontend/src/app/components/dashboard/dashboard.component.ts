@@ -58,9 +58,11 @@ export class DashboardComponent implements OnInit {
     // Load total payments
     this.paymentService.getPayments().subscribe({
       next: (response) => {
-        this.stats.totalPayments = response.data.reduce((total: number, payment: any) => {
-          return total + parseFloat(payment.total_amount || 0);
-        }, 0);
+        this.stats.totalPayments = response.data
+          .filter((payment: any) => !payment.reverted)  // Exclude reverted payments
+          .reduce((total: number, payment: any) => {
+            return total + parseFloat(payment.total_amount || 0);
+          }, 0);
       },
       error: (error) => console.error('Error loading payments:', error)
     });
@@ -114,7 +116,7 @@ export class DashboardComponent implements OnInit {
               ? `${payment.first_name}${payment.middle_name ? ' ' + payment.middle_name : ''} ${payment.last_name}`
               : 'Unknown Student',
             amount: parseFloat(payment.total_amount || 0),
-            status: 'completed' // All recorded payments are completed
+            status: payment.reverted ? 'reverted' : 'completed'  // Show reverted status
           }));
       },
       error: (error) => console.error('Error loading recent payments:', error)
