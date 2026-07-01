@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService, Student, StudentUpdateResponse, BackPaymentInfo } from '../../services/student.service';
-import { getGradeLabel, maxGrade } from '../../../branding/branding.config';
+import { getGradeLabel, minGrade, maxGrade } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-students',
@@ -16,7 +16,7 @@ export class StudentsComponent implements OnInit {
   students: Student[] = [];
   filteredStudents: Student[] = [];
   selectedGradeLevel: number | null = null;
-  gradeLevels = [1, 2, 3, 4, 5, 6];
+  gradeLevels = Array.from({ length: maxGrade - minGrade + 1 }, (_, i) => i + minGrade);
   loading = false;
   error: string | null = null;
 

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChargeService, Charge, StudentChargeSummary, StudentChargeBreakdown } from '../../services/charge.service';
-import { getGradeLabel } from '../../../branding/branding.config';
+import { getGradeLabel, minGrade, maxGrade } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-charges',
@@ -12,7 +12,7 @@ import { getGradeLabel } from '../../../branding/branding.config';
   styleUrl: './charges.component.scss'
 })
 export class ChargesComponent implements OnInit {
-  gradeLevels = [1, 2, 3, 4, 5, 6];
+  gradeLevels = Array.from({ length: maxGrade - minGrade + 1 }, (_, i) => i + minGrade);
   charges: Charge[] = [];
   filteredCharges: Charge[] = [];
   loading = false;
