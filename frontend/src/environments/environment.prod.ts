@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://mog-backend.up.railway.app/api', // TODO: replace with actual MOG Railway URL
+  apiUrl: 'https://emsd-system-production-fb70.up.railway.app/api',
   appVersion: '1.1.0'
 };
