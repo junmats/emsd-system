@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PaymentService, Payment, PaymentItem } from '../../services/payment.service';
 import { StudentService, Student } from '../../services/student.service';
 import { ChargeService, StudentChargeSummary, StudentChargeBreakdown } from '../../services/charge.service';
+import { branding } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-payments',
@@ -13,7 +14,8 @@ import { ChargeService, StudentChargeSummary, StudentChargeBreakdown } from '../
   styleUrl: './payments.component.scss'
 })
 export class PaymentsComponent implements OnInit {
-  
+  branding = branding;
+
   // Active tab management
   activeTab: 'create' | 'history' = 'create';
   
@@ -636,8 +638,8 @@ export class PaymentsComponent implements OnInit {
       </head>
       <body>
         <div class="header">
-          <div class="school-name">Eager Minds School Of Dalaguete</div>
-          <div class="school-address">Poblacion, Dalaguete, Cebu 6022</div>
+          <div class="school-name">${branding.schoolName}</div>
+          <div class="school-address">${branding.address}</div>
           <div class="statement-title">PAYMENT RECEIPT</div>
         </div>
 

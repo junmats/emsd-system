@@ -6,6 +6,7 @@ import { StudentService } from '../../services/student.service';
 import { ChargeService } from '../../services/charge.service';
 import { PaymentService } from '../../services/payment.service';
 import { AssessmentFlagsService, AssessmentFlag } from '../../services/assessment-flags.service';
+import { branding } from '../../../branding/branding.config';
 
 interface Student {
   id: number;
@@ -67,6 +68,7 @@ interface Assessment {
   styleUrls: ['./assessments.component.scss']
 })
 export class AssessmentsComponent implements OnInit {
+  branding = branding;
   students: Student[] = [];
   selectedStudent: Student | null = null;
   assessment: Assessment | null = null;
@@ -381,8 +383,8 @@ export class AssessmentsComponent implements OnInit {
       </head>
       <body>
         <div class="header">
-          <div class="school-name">Eager Minds School of Dalaguete</div>
-          <div class="school-address">Poblacion, Dalaguete, Cebu</div>
+          <div class="school-name">${branding.schoolName}</div>
+          <div class="school-address">${branding.address}</div>
           <div class="statement-title">Statement of Account</div>
         </div>
 
@@ -953,8 +955,8 @@ export class AssessmentsComponent implements OnInit {
     return `
       <div class="assessment-card">
         <div class="header">
-          <div class="school-name">Eager Minds School of Dalaguete</div>
-          <div class="school-address">Poblacion, Dalaguete, Cebu</div>
+          <div class="school-name">${branding.schoolName}</div>
+          <div class="school-address">${branding.address}</div>
           <div class="document-title">STATEMENT OF ACCOUNT</div>
         </div>
 

@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Payment } from '../../services/payment.service';
+import { branding } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-invoice-print',
@@ -13,11 +14,10 @@ import { Payment } from '../../services/payment.service';
         <!-- Header Section -->
         <div class="invoice-header">
           <div class="school-info">
-            <h3 class="school-name">Eager Minds School</h3>
+            <h3 class="school-name">{{ branding.schoolName }}</h3>
             <p class="school-address">
-              567 Learning Lane<br>
-              Education City, EC 12345<br>
-              Phone: (555) 123-4567
+              {{ branding.address }}<br>
+              {{ branding.phone ? 'Phone: ' + branding.phone : '' }}
             </p>
           </div>
           <div class="invoice-details">
@@ -295,6 +295,7 @@ import { Payment } from '../../services/payment.service';
   `]
 })
 export class InvoicePrintComponent {
+  branding = branding;
   @Input() payment!: Payment;
 
   getFullName(): string {

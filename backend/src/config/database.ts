@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import { schoolConfig } from './school';
 
 let pool: mysql.Pool;
 
@@ -96,12 +97,16 @@ const createTables = async (): Promise<void> => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         student_id INT NOT NULL,
         payment_date DATE NOT NULL,
+        invoice_number VARCHAR(20) UNIQUE,
         total_amount DECIMAL(10, 2) NOT NULL,
         payment_method ENUM('cash', 'card', 'bank_transfer', 'check') NOT NULL,
         reference_number VARCHAR(50),
         notes TEXT,
         created_by INT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reverted TINYINT(1) DEFAULT 0,
+        reverted_date TIMESTAMP NULL DEFAULT NULL,
+        reverted_reason VARCHAR(255),
         FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
         FOREIGN KEY (created_by) REFERENCES users(id)
       )
@@ -187,22 +192,32 @@ const createTables = async (): Promise<void> => {
 };
 
 const runMigrations = async (): Promise<void> => {
-  try {
-    // Check if middle_name column exists in students table
-    const [columns] = await pool.execute(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'students' AND COLUMN_NAME = 'middle_name'
-    `, [process.env.DB_NAME || 'emsd_system']);
+  const db = process.env.DB_NAME || 'emsd_system';
 
-    if (!Array.isArray(columns) || columns.length === 0) {
-      // Add middle_name column if it doesn't exist
-      await pool.execute(`
-        ALTER TABLE students 
-        ADD COLUMN middle_name VARCHAR(50) AFTER first_name
-      `);
-      console.log('Migration: Added middle_name column to students table');
+  const addColumnIfMissing = async (
+    table: string,
+    column: string,
+    definition: string,
+    afterColumn?: string
+  ) => {
+    const [rows] = await pool.execute(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [db, table, column]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) {
+      const after = afterColumn ? ` AFTER \`${afterColumn}\`` : '';
+      await pool.execute(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}${after}`);
+      console.log(`Migration: Added ${column} to ${table}`);
     }
+  };
+
+  try {
+    await addColumnIfMissing('students', 'middle_name', 'VARCHAR(50)', 'first_name');
+    await addColumnIfMissing('payments', 'invoice_number', 'VARCHAR(20) UNIQUE', 'payment_date');
+    await addColumnIfMissing('payments', 'reverted', 'TINYINT(1) DEFAULT 0', 'created_at');
+    await addColumnIfMissing('payments', 'reverted_date', 'TIMESTAMP NULL DEFAULT NULL', 'reverted');
+    await addColumnIfMissing('payments', 'reverted_reason', 'VARCHAR(255)', 'reverted_date');
   } catch (error) {
     console.error('Error running migrations:', error);
   }
@@ -213,20 +228,20 @@ const createInitialAdminUser = async (): Promise<void> => {
     // Check if admin user already exists
     const [existingUsers] = await pool.execute(
       'SELECT id FROM users WHERE username = ? OR email = ?',
-      ['admin', 'admin@school.com']
+      [schoolConfig.adminUsername, schoolConfig.adminEmail]
     );
-    
+
     if (!Array.isArray(existingUsers) || existingUsers.length === 0) {
       const bcrypt = require('bcryptjs');
-      const hashedPassword = await bcrypt.hash('admin123', 12);
-      
+      const hashedPassword = await bcrypt.hash(schoolConfig.adminDefaultPassword, 12);
+
       await pool.execute(
         'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
-        ['admin', 'admin@school.com', hashedPassword, 'admin']
+        [schoolConfig.adminUsername, schoolConfig.adminEmail, hashedPassword, 'admin']
       );
-      
+
       console.log('Initial admin user created successfully');
-      console.log('Login credentials: username=admin, password=admin123');
+      console.log(`Login credentials: username=${schoolConfig.adminUsername}, password=${schoolConfig.adminDefaultPassword}`);
     } else {
       console.log('Admin user already exists');
     }

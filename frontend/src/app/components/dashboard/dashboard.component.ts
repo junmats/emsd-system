@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { StudentService } from '../../services/student.service';
 import { PaymentService } from '../../services/payment.service';
 import { ChargeService } from '../../services/charge.service';
+import { branding } from '../../../branding/branding.config';
 
 interface DashboardStats {
   totalStudents: number;
@@ -20,6 +21,7 @@ interface DashboardStats {
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
+  branding = branding;
   stats: DashboardStats = {
     totalStudents: 0,
     totalPayments: 0,

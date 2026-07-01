@@ -12,6 +12,7 @@ import migrationRoutes from './routes/migration';
 import assessmentFlagsRoutes from './routes/assessment-flags';
 import { errorHandler } from './middleware/errorHandler';
 import { connectDatabase } from './config/database';
+import { schoolConfig } from './config/school';
 
 // Load environment variables
 dotenv.config();
@@ -100,8 +101,8 @@ app.get('/api/test-assessment-flags/:date', async (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'EMSD School System API',
+  res.json({
+    message: `${schoolConfig.name} API`,
     version: '1.0.0',
     endpoints: [
       '/api/health',
@@ -119,7 +120,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    message: 'School System API is running',
+    message: `${schoolConfig.name} API is running`,
     version: '1.0.2'
   });
 });

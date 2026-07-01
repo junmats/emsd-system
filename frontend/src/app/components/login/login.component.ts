@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { branding } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-login',
@@ -12,6 +13,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
+  branding = branding;
   username = '';
   password = '';
   loading = false;

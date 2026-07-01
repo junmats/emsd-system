@@ -1,5 +1,27 @@
 # Deployment Guide
 
+## Deploying for a New School (White-Label)
+
+This codebase is config-driven, not multi-tenant: each school gets its own Railway backend, its own Vercel frontend, and its own database, all from the same repo. To stand up a new school's instance:
+
+1. **Edit branding before building:**
+   - `frontend/src/branding/branding.config.ts` — set `schoolName`, `schoolShortName`, `address`, `phone`, `email`, `primaryColor`, `primaryDark`.
+   - `frontend/src/index.html` — update the `<title>` fallback to match (cosmetic; the real title is set at runtime from `branding.config.ts`).
+   - `frontend/public/favicon.ico` — swap in the new school's icon (binary asset, no env-var equivalent).
+2. **Follow Steps 1–4 below** (Railway backend, Vercel frontend) to create the new school's separate deployment.
+3. **Set the backend's school/admin env vars** on the new Railway project (in addition to the standard `DB_*`/`JWT_*`/`FRONTEND_URL` vars below):
+   ```
+   SCHOOL_NAME=<New School Name>
+   SCHOOL_ADDRESS=<New School Address>
+   SCHOOL_PHONE=<New School Phone>
+   SCHOOL_EMAIL=<New School Email>
+   ADMIN_USERNAME=admin
+   ADMIN_EMAIL=<new-admin-email>
+   ADMIN_DEFAULT_PASSWORD=<new-strong-password>
+   ```
+   These seed the initial admin user on first run and drive the API's identity strings (`/` and `/api/health` responses). Change `ADMIN_DEFAULT_PASSWORD` after first login.
+4. Each school's database is created fresh by the backend on first connect (see `createTables()` in `backend/src/config/database.ts`) — no manual schema setup needed.
+
 ## Prerequisites
 - Vercel account (for frontend)
 - Railway account (for backend + database)
