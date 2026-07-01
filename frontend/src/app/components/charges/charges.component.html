@@ -43,7 +43,7 @@
           <label for="gradeFilter" class="form-label">Grade Level</label>
           <select class="form-select" id="gradeFilter" [(ngModel)]="selectedGradeFilter" (change)="applyFilters()">
             <option value="">All Grades</option>
-            <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+            <option *ngFor="let grade of gradeLevels" [value]="grade">{{ getGradeLevelText(grade) }}</option>
           </select>
         </div>
         <div class="col-md-2">
@@ -141,7 +141,7 @@
                       </div>
                     </td>
                     <td>
-                      <span class="badge bg-primary">Grade {{ charge.grade_level }}</span>
+                      <span class="badge bg-primary">{{ getGradeLevelText(charge.grade_level) }}</span>
                     </td>
                     <td>
                       <span class="badge"
@@ -212,7 +212,7 @@
               <label for="studentGradeFilter" class="form-label">Grade Level</label>
               <select class="form-select" id="studentGradeFilter" [(ngModel)]="selectedStudentGradeFilter" (change)="applyStudentFilters()">
                 <option value="">All Grades</option>
-                <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+                <option *ngFor="let grade of gradeLevels" [value]="grade">{{ getGradeLevelText(grade) }}</option>
               </select>
             </div>
             <div class="col-md-2">
@@ -304,7 +304,7 @@
                       </div>
                     </td>
                     <td>
-                      <span class="badge bg-primary">Grade {{ student.grade_level }}</span>
+                      <span class="badge bg-primary">{{ getGradeLevelText(student.grade_level) }}</span>
                     </td>
                     <td>
                       <strong>{{ formatCurrency(student.total_charges) }}</strong>
@@ -451,7 +451,7 @@
                                [checked]="isGradeSelected(grade)"
                                (change)="toggleGradeSelection(grade); $event.stopPropagation()">
                         <label class="form-check-label w-100" [for]="'grade-' + grade">
-                          Grade {{ grade }}
+                          {{ getGradeLevelText(grade) }}
                         </label>
                       </div>
                     </div>
@@ -573,7 +573,7 @@
                       [(ngModel)]="formCharge.grade_level" 
                       name="editGradeLevel" 
                       required>
-                <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+                <option *ngFor="let grade of gradeLevels" [value]="grade">{{ getGradeLevelText(grade) }}</option>
               </select>
               <div class="invalid-feedback" *ngIf="formErrors['grade_level']">
                 {{ formErrors['grade_level'] }}
@@ -637,7 +637,7 @@
         <p>Are you sure you want to delete the following charge?</p>
         <div class="alert alert-warning">
           <strong>{{ selectedCharge.name }}</strong><br>
-          <small>Amount: ₱{{ selectedCharge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }} | Grade {{ selectedCharge.grade_level }} | {{ getChargeTypeLabel(selectedCharge.charge_type) }}</small>
+          <small>Amount: ₱{{ selectedCharge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }} | {{ getGradeLevelText(selectedCharge.grade_level) }} | {{ getChargeTypeLabel(selectedCharge.charge_type) }}</small>
         </div>
         <p class="text-danger"><strong>Warning:</strong> This action cannot be undone.</p>
       </div>
@@ -669,7 +669,7 @@
           <div class="col-md-6">
             <h6 class="text-muted mb-3">Student Information</h6>
             <p><strong>Student ID:</strong> {{ studentBreakdown.student.student_number }}</p>
-            <p><strong>Grade Level:</strong> Grade {{ studentBreakdown.student.grade_level }}</p>
+            <p><strong>Grade Level:</strong> {{ getGradeLevelText(studentBreakdown.student.grade_level) }}</p>
             <p><strong>Status:</strong> 
               <span class="badge ms-1" 
                     [class.bg-success]="studentBreakdown.student.status === 'active'"
@@ -763,7 +763,7 @@
                     </td>
                     <td>
                       <span class="badge bg-warning text-dark">
-                        Grade {{ backPayment.original_grade_level }}
+                        {{ getGradeLevelText(backPayment.original_grade_level) }}
                       </span>
                     </td>
                     <td>

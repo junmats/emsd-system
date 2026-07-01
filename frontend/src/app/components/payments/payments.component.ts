@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PaymentService, Payment, PaymentItem } from '../../services/payment.service';
 import { StudentService, Student } from '../../services/student.service';
 import { ChargeService, StudentChargeSummary, StudentChargeBreakdown } from '../../services/charge.service';
-import { branding } from '../../../branding/branding.config';
+import { branding, getGradeLabel } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-payments',
@@ -417,6 +417,10 @@ export class PaymentsComponent implements OnInit {
 
   getStudentFullName(student: Student): string {
     return `${student.first_name} ${student.last_name}`;
+  }
+
+  getGradeLevelText(level: number): string {
+    return getGradeLabel(level);
   }
 
   formatCurrency(amount: number): string {
