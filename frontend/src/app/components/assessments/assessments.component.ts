@@ -6,7 +6,7 @@ import { StudentService } from '../../services/student.service';
 import { ChargeService } from '../../services/charge.service';
 import { PaymentService } from '../../services/payment.service';
 import { AssessmentFlagsService, AssessmentFlag } from '../../services/assessment-flags.service';
-import { branding } from '../../../branding/branding.config';
+import { branding, getGradeLabel } from '../../../branding/branding.config';
 
 interface Student {
   id: number;
@@ -226,6 +226,10 @@ export class AssessmentsComponent implements OnInit {
     return `${student.first_name}${middle} ${student.last_name}`;
   }
 
+  getGradeLevelText(level: number): string {
+    return getGradeLabel(level);
+  }
+
   getPaymentAmountForCharge(chargeId: number): number {
     if (!this.assessment?.payments) return 0;
     
@@ -392,7 +396,7 @@ export class AssessmentsComponent implements OnInit {
           <div class="student-left">
             <div class="info-line"><span class="info-label">Student:</span> ${studentName}</div>
             <div class="info-line"><span class="info-label">Number:</span> ${student.student_number}</div>
-            <div class="info-line"><span class="info-label">Grade:</span> ${student.grade_level}</div>
+            <div class="info-line"><span class="info-label">Grade:</span> ${getGradeLabel(student.grade_level)}</div>
           </div>
           <div class="student-right">
             <div class="info-line"><span class="info-label">Date:</span> ${new Date(this.assessment.assessmentDate).toLocaleDateString()}</div>
@@ -963,7 +967,7 @@ export class AssessmentsComponent implements OnInit {
         <div class="student-info">
           <strong>Student:</strong> ${this.getStudentFullName(assessment.student)}<br>
           <strong>ID:</strong> ${assessment.student.student_number} | 
-          <strong>Grade:</strong> ${assessment.student.grade_level}<br>
+          <strong>Grade:</strong> ${getGradeLabel(assessment.student.grade_level)}<br>
           <strong>Assessment Date:</strong> ${new Date(assessment.assessmentDate).toLocaleDateString()}<br>
           <strong>Due Date:</strong> ${new Date(assessment.dueDate).toLocaleDateString()}
         </div>

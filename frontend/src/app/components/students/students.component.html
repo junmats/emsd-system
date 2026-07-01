@@ -20,7 +20,7 @@
           <label for="gradeFilter" class="form-label">Grade Level</label>
           <select class="form-select" id="gradeFilter" [(ngModel)]="selectedGradeFilter" (change)="applyFilters()">
             <option value="">All Grades</option>
-            <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+            <option *ngFor="let grade of gradeLevels" [value]="grade">{{ getGradeLevelText(grade) }}</option>
           </select>
         </div>
         <div class="col-md-2">
@@ -158,7 +158,7 @@
                       <span class="badge bg-info text-dark">{{ student.student_number }}</span>
                     </td>
                     <td>
-                      <span class="badge bg-primary">Grade {{ student.grade_level }}</span>
+                      <span class="badge bg-primary">{{ getGradeLevelText(student.grade_level) }}</span>
                     </td>
                     <td class="text-muted">
                       {{ formatDate(student.enrollment_date) }}
@@ -183,8 +183,8 @@
                                 (click)="openEditModal(student)">
                           Edit
                         </button>
-                        <button class="btn btn-sm btn-outline-success" 
-                                title="{{ student.grade_level === 6 ? 'Graduate Student' : 'Upgrade to Grade ' + (student.grade_level + 1) }}"
+                        <button class="btn btn-sm btn-outline-success"
+                                title="{{ student.grade_level === maxGrade ? 'Graduate Student' : 'Upgrade to ' + getGradeLevelText(student.grade_level + 1) }}"
                                 (click)="openUpgradeModal(student)"
                                 *ngIf="student.status === 'active'">
                           <i class="fas fa-arrow-up"></i>
@@ -213,20 +213,20 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          {{ selectedStudent?.grade_level === 6 ? 'Graduate Student' : 'Upgrade Grade Level' }}
+          {{ selectedStudent?.grade_level === maxGrade ? 'Graduate Student' : 'Upgrade Grade Level' }}
         </h5>
         <button type="button" class="btn-close" (click)="closeModals()"></button>
       </div>
       <div class="modal-body" *ngIf="selectedStudent">
         <p class="text-center">
-          <span *ngIf="selectedStudent.grade_level < 6">
-            Upgrade <strong>{{ getStudentFullName(selectedStudent) }}</strong> from 
-            <strong>Grade {{ selectedStudent.grade_level }}</strong> to 
-            <strong>Grade {{ selectedStudent.grade_level + 1 }}</strong>?
+          <span *ngIf="selectedStudent.grade_level < maxGrade">
+            Upgrade <strong>{{ getStudentFullName(selectedStudent) }}</strong> from
+            <strong>{{ getGradeLevelText(selectedStudent.grade_level) }}</strong> to
+            <strong>{{ getGradeLevelText(selectedStudent.grade_level + 1) }}</strong>?
           </span>
-          <span *ngIf="selectedStudent.grade_level === 6">
-            Graduate <strong>{{ getStudentFullName(selectedStudent) }}</strong> from 
-            <strong>Grade {{ selectedStudent.grade_level }}</strong>?
+          <span *ngIf="selectedStudent.grade_level === maxGrade">
+            Graduate <strong>{{ getStudentFullName(selectedStudent) }}</strong> from
+            <strong>{{ getGradeLevelText(selectedStudent.grade_level) }}</strong>?
             <br><small class="text-muted">This will change their status to "Graduated"</small>
           </span>
         </p>
@@ -236,7 +236,7 @@
         <button type="button" class="btn btn-success" (click)="confirmUpgrade()" [disabled]="submitting">
           <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
           <i *ngIf="!submitting" class="fas fa-check me-2"></i>
-          {{ submitting ? 'Processing...' : (selectedStudent?.grade_level === 6 ? 'Graduate' : 'Upgrade') }}
+          {{ submitting ? 'Processing...' : (selectedStudent?.grade_level === maxGrade ? 'Graduate' : 'Upgrade') }}
         </button>
       </div>
     </div>
@@ -315,7 +315,7 @@
                       [(ngModel)]="formStudent.grade_level" 
                       name="gradeLevel" 
                       required>
-                <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+                <option *ngFor="let grade of gradeLevels" [value]="grade">{{ getGradeLevelText(grade) }}</option>
               </select>
               <div class="invalid-feedback" *ngIf="formErrors['grade_level']">
                 {{ formErrors['grade_level'] }}
@@ -466,7 +466,7 @@
                       [(ngModel)]="formStudent.grade_level" 
                       name="editGradeLevel" 
                       required>
-                <option *ngFor="let grade of gradeLevels" [value]="grade">Grade {{ grade }}</option>
+                <option *ngFor="let grade of gradeLevels" [value]="grade">{{ getGradeLevelText(grade) }}</option>
               </select>
               <div class="invalid-feedback" *ngIf="formErrors['grade_level']">
                 {{ formErrors['grade_level'] }}
@@ -674,9 +674,9 @@
       </div>
       <div class="modal-body" style="max-height: calc(90vh - 130px); overflow-y: auto;">
         <div class="alert alert-warning">
-          <h6><strong>{{ backPaymentInfo.student?.first_name }} {{ backPaymentInfo.student?.last_name }} has unpaid charges from Grade {{ backPaymentInfo.originalGrade }}</strong></h6>
+          <h6><strong>{{ backPaymentInfo.student?.first_name }} {{ backPaymentInfo.student?.last_name }} has unpaid charges from {{ getGradeLevelText(backPaymentInfo.originalGrade) }}</strong></h6>
           <p class="mb-2">
-            Upgrading to Grade {{ backPaymentInfo.newGrade }} will create back payments for the following unpaid charges:
+            Upgrading to {{ getGradeLevelText(backPaymentInfo.newGrade) }} will create back payments for the following unpaid charges:
           </p>
         </div>
         
@@ -685,7 +685,7 @@
           <div class="card-header bg-warning">
             <h6 class="mb-0">
               <i class="fas fa-plus-circle me-2"></i>
-              New Back Payments (from Grade {{ backPaymentInfo.originalGrade }})
+              New Back Payments (from {{ getGradeLevelText(backPaymentInfo.originalGrade) }})
             </h6>
           </div>
           <div class="card-body">
@@ -750,7 +750,7 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let backPayment of existingBackPayments">
-                    <td>Grade {{ backPayment.original_grade_level }}</td>
+                    <td>{{ getGradeLevelText(backPayment.original_grade_level) }}</td>
                     <td>{{ backPayment.charge_name }}</td>
                     <td class="text-end">₱{{ backPayment.amount_due | number:'1.2-2' }}</td>
                     <td class="text-end">₱{{ backPayment.amount_paid | number:'1.2-2' }}</td>
@@ -802,7 +802,7 @@
         <div class="alert alert-info">
           <strong>What happens next:</strong>
           <ul class="mb-0">
-            <li>The student will be upgraded to Grade {{ backPaymentInfo.newGrade }}</li>
+            <li>The student will be upgraded to {{ getGradeLevelText(backPaymentInfo.newGrade) }}</li>
             <li>The unpaid charges will be recorded as back payments</li>
             <li *ngIf="existingBackPayments.length > 0">Existing back payments from previous grades will remain unchanged</li>
             <li>All back payments can be settled later through the payment system</li>

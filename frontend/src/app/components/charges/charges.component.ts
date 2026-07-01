@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChargeService, Charge, StudentChargeSummary, StudentChargeBreakdown } from '../../services/charge.service';
+import { getGradeLabel } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-charges',
@@ -467,9 +468,13 @@ export class ChargesComponent implements OnInit {
       return 'All grades selected';
     }
     if (this.selectedGradeLevels.length <= 3) {
-      return this.selectedGradeLevels.map(g => `Grade ${g}`).join(', ');
+      return this.selectedGradeLevels.map(g => getGradeLabel(g)).join(', ');
     }
     return `${this.selectedGradeLevels.length} grades selected`;
+  }
+
+  getGradeLevelText(level: number): string {
+    return getGradeLabel(level);
   }
 
   // Dropdown control methods

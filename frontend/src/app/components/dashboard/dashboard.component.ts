@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { StudentService } from '../../services/student.service';
 import { PaymentService } from '../../services/payment.service';
 import { ChargeService } from '../../services/charge.service';
-import { branding } from '../../../branding/branding.config';
+import { branding, getGradeLabel } from '../../../branding/branding.config';
 
 interface DashboardStats {
   totalStudents: number;
@@ -127,5 +127,9 @@ export class DashboardComponent implements OnInit {
 
   refreshData() {
     this.loadDashboardData();
+  }
+
+  getGradeLevelText(level: number): string {
+    return getGradeLabel(level);
   }
 }

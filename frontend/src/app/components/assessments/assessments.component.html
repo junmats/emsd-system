@@ -98,7 +98,7 @@
                         <tr *ngFor="let assessment of batchAssessments; let i = index">
                           <td>
                             <strong>{{ getStudentFullName(assessment.student) }}</strong><br>
-                            <small class="text-muted">{{ assessment.student.student_number }} | Grade {{ assessment.student.grade_level }}</small>
+                            <small class="text-muted">{{ assessment.student.student_number }} | {{ getGradeLevelText(assessment.student.grade_level) }}</small>
                           </td>
                           <td>
                             <div class="small">
@@ -187,7 +187,7 @@
             <div class="col-md-3">
               <select class="form-select" [(ngModel)]="selectedGrade">
                 <option value="">All Grades</option>
-                <option *ngFor="let grade of grades" [value]="grade">Grade {{ grade }}</option>
+                <option *ngFor="let grade of grades" [value]="grade">{{ getGradeLevelText(grade) }}</option>
               </select>
             </div>
             <div class="col-md-3">
@@ -265,7 +265,7 @@
                     </span>
                   </td>
                   <td>
-                    <span class="badge bg-primary">Grade {{ student.grade_level }}</span>
+                    <span class="badge bg-primary">{{ getGradeLevelText(student.grade_level) }}</span>
                   </td>
                   <td>
                     <span class="badge" 
@@ -318,7 +318,7 @@
           <div class="mb-3">
             <label class="form-label fw-bold">Student:</label>
             <div>{{ getStudentFullName(assessment.student) }}</div>
-            <small class="text-muted">{{ assessment.student.student_number }} - Grade {{ assessment.student.grade_level }}</small>
+            <small class="text-muted">{{ assessment.student.student_number }} - {{ getGradeLevelText(assessment.student.grade_level) }}</small>
           </div>
 
           <!-- Date -->
@@ -432,7 +432,7 @@
                 <strong>Student Number:</strong> {{ assessment.student.student_number }}
               </div>
               <div class="mb-2">
-                <strong>Grade Level:</strong> Grade {{ assessment.student.grade_level }}
+                <strong>Grade Level:</strong> {{ getGradeLevelText(assessment.student.grade_level) }}
               </div>
             </div>
             <div class="col-md-6">

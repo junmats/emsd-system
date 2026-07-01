@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentService, Student, StudentUpdateResponse, BackPaymentInfo } from '../../services/student.service';
+import { getGradeLabel, maxGrade } from '../../../branding/branding.config';
 
 @Component({
   selector: 'app-students',
@@ -166,8 +167,10 @@ export class StudentsComponent implements OnInit {
     return `${student.first_name}${middleName} ${student.last_name}`;
   }
 
+  readonly maxGrade = maxGrade;
+
   getGradeLevelText(gradeLevel: number): string {
-    return `Grade ${gradeLevel}`;
+    return getGradeLabel(gradeLevel);
   }
 
   formatDate(dateString: string): string {
@@ -423,8 +426,8 @@ export class StudentsComponent implements OnInit {
   confirmUpgrade() {
     if (!this.selectedStudent) return;
 
-    const isGraduating = this.selectedStudent.grade_level === 6;
-    const newGradeLevel = isGraduating ? 6 : this.selectedStudent.grade_level + 1;
+    const isGraduating = this.selectedStudent.grade_level === maxGrade;
+    const newGradeLevel = isGraduating ? maxGrade : this.selectedStudent.grade_level + 1;
     const newStatus = isGraduating ? 'graduated' : 'active';
 
     // First check for back payments
@@ -645,8 +648,8 @@ export class StudentsComponent implements OnInit {
     // Check for back payments for all students
     this.bulkUpgrading = true;
     const backPaymentChecks = activeStudents.map(student => {
-      const isGraduating = student.grade_level === 6;
-      const newGradeLevel = isGraduating ? 6 : student.grade_level + 1;
+      const isGraduating = student.grade_level === maxGrade;
+      const newGradeLevel = isGraduating ? maxGrade : student.grade_level + 1;
       
       return this.studentService.checkBackPayments(student.id, newGradeLevel).toPromise()
         .then(response => ({
@@ -671,7 +674,7 @@ export class StudentsComponent implements OnInit {
         confirmMessage += `Students to be upgraded to next grade:\n`;
         upgradingStudents.forEach(r => {
           const backPaymentNote = r.hasBackPayments ? ` (⚠️ Has back payments)` : '';
-          confirmMessage += `• ${this.getStudentFullName(r.student)} (Grade ${r.student.grade_level} → Grade ${r.newGradeLevel})${backPaymentNote}\n`;
+          confirmMessage += `• ${this.getStudentFullName(r.student)} (${this.getGradeLevelText(r.student.grade_level)} → ${this.getGradeLevelText(r.newGradeLevel)})${backPaymentNote}\n`;
         });
       }
 
@@ -679,7 +682,7 @@ export class StudentsComponent implements OnInit {
         confirmMessage += `\nStudents to be graduated:\n`;
         graduatingStudents.forEach(r => {
           const backPaymentNote = r.hasBackPayments ? ` (⚠️ Has back payments)` : '';
-          confirmMessage += `• ${this.getStudentFullName(r.student)} (Grade ${r.student.grade_level} → Graduated)${backPaymentNote}\n`;
+          confirmMessage += `• ${this.getStudentFullName(r.student)} (${this.getGradeLevelText(r.student.grade_level)} → Graduated)${backPaymentNote}\n`;
         });
       }
 
