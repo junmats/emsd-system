@@ -141,7 +141,7 @@
                       </div>
                     </td>
                     <td>
-                      <span class="badge bg-primary">{{ getGradeLevelText(charge.grade_level) }}</span>
+                      <span class="badge bg-primary">{{ charge.grade_level != null ? getGradeLevelText(charge.grade_level) : 'All Grades' }}</span>
                     </td>
                     <td>
                       <span class="badge"
@@ -637,7 +637,7 @@
         <p>Are you sure you want to delete the following charge?</p>
         <div class="alert alert-warning">
           <strong>{{ selectedCharge.name }}</strong><br>
-          <small>Amount: ₱{{ selectedCharge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }} | {{ getGradeLevelText(selectedCharge.grade_level) }} | {{ getChargeTypeLabel(selectedCharge.charge_type) }}</small>
+          <small>Amount: ₱{{ selectedCharge.amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) }} | {{ selectedCharge.grade_level != null ? getGradeLevelText(selectedCharge.grade_level) : 'All Grades' }} | {{ getChargeTypeLabel(selectedCharge.charge_type) }}</small>
         </div>
         <p class="text-danger"><strong>Warning:</strong> This action cannot be undone.</p>
       </div>
