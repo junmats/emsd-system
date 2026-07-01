@@ -6,7 +6,7 @@ import { StudentService } from '../../services/student.service';
 import { ChargeService } from '../../services/charge.service';
 import { PaymentService } from '../../services/payment.service';
 import { AssessmentFlagsService, AssessmentFlag } from '../../services/assessment-flags.service';
-import { branding, getGradeLabel } from '../../../branding/branding.config';
+import { branding, getGradeLabel, minGrade, maxGrade } from '../../../branding/branding.config';
 
 interface Student {
   id: number;
@@ -91,7 +91,7 @@ export class AssessmentsComponent implements OnInit {
   
   // Filters
   selectedGrade: number | string = '';
-  grades = [1, 2, 3, 4, 5, 6];
+  grades = Array.from({ length: maxGrade - minGrade + 1 }, (_, i) => i + minGrade);
 
   constructor(
     private studentService: StudentService,
